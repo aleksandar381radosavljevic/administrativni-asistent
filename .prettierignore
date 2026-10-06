@@ -1,0 +1,4 @@
+docs/
+supabase/
+package-lock.json
+.next/
