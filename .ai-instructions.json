@@ -1,0 +1,7 @@
+{
+  "layers": [
+    "core",
+    "stacks/react",
+    "design/osnova"
+  ]
+}

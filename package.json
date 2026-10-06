@@ -23,6 +23,7 @@
     "@types/node": "24.19.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "ai-instructions": "github:aleksandar381radosavljevic/ai-instructions#127b47861563186f5fee47d540f9ba411a467bc8",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.0",
     "prettier": "3.9.9",
