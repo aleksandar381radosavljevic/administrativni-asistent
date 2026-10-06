@@ -12,7 +12,9 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:db": "bash scripts/test-db.sh",
+    "seed:generate": "node scripts/generate-seed.mjs"
   },
   "dependencies": {
     "next": "16.4.0",
@@ -27,6 +29,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.0",
     "prettier": "3.9.9",
+    "supabase": "2.120.0",
     "typescript": "6.0.3"
   }
 }
