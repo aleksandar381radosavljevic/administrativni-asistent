@@ -1,0 +1,285 @@
+/* Administrativni Asistent - Global Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   CSS VARIABLES (Design System tokens)
+   ============================================================================ */
+
+@layer base {
+  :root {
+    /* Colors */
+    --cream: #fbf6ed;
+    --paper: #ffffff;
+    --ink: #2b2622;
+    --ink-muted: #93897c;
+    --amber: #e8743b;
+    --amber-soft: #fbe4d6;
+    --honey: #f2b544;
+    --honey-soft: #fcefd2;
+    --sage: #6f9b7d;
+    --sage-soft: #e3efe7;
+    --clay: #ece3d3;
+    --clay-dark: #dcd0bb;
+    --rust: #c0524a;
+    --rust-soft: #f7e2de;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(43, 38, 34, 0.06);
+    --shadow-md: 0 2px 8px rgba(43, 38, 34, 0.1);
+    --shadow-lg: 0 8px 24px rgba(43, 38, 34, 0.16);
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  /* Reset default styles */
+  * {
+    @apply m-0 p-0 border-0;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-cream text-ink antialiased;
+    font-family: "Inter", sans-serif;
+  }
+
+  /* Typography */
+  h1 {
+    @apply font-display text-display;
+  }
+
+  h2 {
+    @apply font-display text-title;
+  }
+
+  h3 {
+    @apply font-display text-heading;
+  }
+
+  p {
+    @apply text-body;
+  }
+
+  a {
+    @apply text-amber transition-colors hover:text-amber/80 focus-visible:outline-amber focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  button {
+    @apply transition-all focus-visible:outline-amber focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply focus-visible:outline-amber focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+@layer components {
+  /* Focus ring utility (za sve interactive elemente) */
+  .focus-ring {
+    @apply focus-visible:outline-amber focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  /* Text utilities */
+  .text-display {
+    @apply text-2xl font-[800] font-display leading-tight tracking-[-0.01em];
+  }
+
+  .text-title {
+    @apply text-xl font-[800] font-display leading-snug tracking-[-0.01em];
+  }
+
+  .text-heading {
+    @apply text-base font-bold font-display leading-relaxed;
+  }
+
+  .text-body {
+    @apply text-sm font-normal leading-relaxed;
+  }
+
+  .text-body-sm {
+    @apply text-xs font-normal leading-relaxed;
+  }
+
+  .text-caption {
+    @apply text-xs font-semibold leading-relaxed;
+  }
+
+  .text-eyebrow {
+    @apply text-[11px] font-[800] font-display uppercase tracking-widest;
+  }
+
+  .text-data {
+    @apply text-xs font-semibold font-mono;
+  }
+
+  /* Card utilities */
+  .card-base {
+    @apply bg-paper rounded-lg shadow-sm;
+  }
+
+  /* Badge utilities */
+  .badge {
+    @apply inline-block rounded-full font-[700] text-xs;
+  }
+
+  .badge-online {
+    @apply badge bg-sage-soft text-sage;
+  }
+
+  .badge-in-person {
+    @apply badge bg-amber-soft text-amber;
+  }
+
+  .badge-by-mail {
+    @apply badge bg-honey-soft text-[#b5851f];
+  }
+
+  .badge-required {
+    @apply badge bg-amber-soft text-amber;
+  }
+
+  .badge-optional {
+    @apply badge bg-clay text-ink-muted;
+  }
+
+  /* Button base */
+  .btn {
+    @apply px-4 py-3 rounded-lg font-bold text-sm font-display transition-all focus-ring;
+  }
+
+  .btn-primary {
+    @apply btn bg-amber text-paper hover:bg-amber/90;
+  }
+
+  .btn-secondary {
+    @apply btn bg-paper text-ink border border-clay-dark hover:bg-clay;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-muted hover:text-ink;
+  }
+
+  .btn-destructive {
+    @apply btn bg-rust text-paper hover:bg-rust/90;
+  }
+
+  /* Input utilities */
+  .input-base {
+    @apply w-full rounded-lg px-4 py-3 text-sm bg-paper border border-clay-dark text-ink placeholder-ink-muted focus-ring;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply bg-clay rounded-lg animate-pulse;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-eyebrow text-amber;
+  }
+
+  /* Prose for rich text */
+  .prose {
+    @apply text-body leading-relaxed;
+  }
+
+  .prose a {
+    @apply text-amber hover:text-amber/80 underline;
+  }
+
+  .prose strong {
+    @apply font-semibold text-ink;
+  }
+
+  .prose em {
+    @apply italic;
+  }
+
+  /* Accessibility - skip to main */
+  .sr-only {
+    @apply absolute w-1 h-1 p-0 -m-1 overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+  }
+
+  /* Scrollbar customization (Webkit browsers) */
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-clay;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-clay-dark rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-muted;
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@layer utilities {
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 250ms ease;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Mobile adjustments if needed */
+}
+
+@media (min-width: 1024px) {
+  /* Desktop adjustments if needed */
+}

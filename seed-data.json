@@ -1,0 +1,388 @@
+{
+  "categories": [
+    {
+      "id": "cat-001",
+      "name": "Lična dokumenta",
+      "slug": "licna-dokumenta",
+      "icon": "🪪",
+      "sort_order": 1
+    },
+    {
+      "id": "cat-002",
+      "name": "Preseljenje i adresa",
+      "slug": "preseljenje-i-adresa",
+      "icon": "🏠",
+      "sort_order": 2
+    },
+    {
+      "id": "cat-003",
+      "name": "Vozila i saobraćaj",
+      "slug": "vozila-i-saobracaj",
+      "icon": "🚗",
+      "sort_order": 3
+    },
+    {
+      "id": "cat-004",
+      "name": "Deca i obrazovanje",
+      "slug": "deca-i-obrazovanje",
+      "icon": "🎓",
+      "sort_order": 4
+    },
+    {
+      "id": "cat-005",
+      "name": "Posao i firma",
+      "slug": "posao-i-firma",
+      "icon": "💼",
+      "sort_order": 5
+    },
+    {
+      "id": "cat-006",
+      "name": "Potvrde, prava i penzija",
+      "slug": "potvrde-prava-i-penzija",
+      "icon": "📋",
+      "sort_order": 6
+    }
+  ],
+  "institutions": [
+    {
+      "id": "inst-001",
+      "name": "Ministarstvo unutrašnjih poslova (MUP)",
+      "slug": "mup",
+      "description": "Nadležna institucija za lična dokumenta, registraciju vozila i prijavu prebivališta",
+      "website": "https://mup.gov.rs",
+      "phone": "+381 11 3618 700",
+      "email": "kontakt@mup.gov.rs",
+      "working_hours": "08:00-15:30, od ponedjeljka do petka",
+      "status": "published"
+    },
+    {
+      "id": "inst-002",
+      "name": "Grad/Opština - Lokalna uprava",
+      "slug": "grad-opstina",
+      "description": "Lokalna uprava za prijavu boravišta i registraciju stana",
+      "website": "https://www.beograd.rs",
+      "phone": "+381 11 3618 000",
+      "email": "info@beograd.rs",
+      "working_hours": "08:00-16:00, od ponedjeljka do petka",
+      "status": "published"
+    },
+    {
+      "id": "inst-003",
+      "name": "Ministarstvo prosvete",
+      "slug": "ministarstvo-prosvete",
+      "description": "Nadležna institucija za upis dece u vrtić i škole",
+      "website": "https://mpn.gov.rs",
+      "phone": "+381 11 3618 800",
+      "email": "info@mpn.gov.rs",
+      "working_hours": "08:00-15:30, od ponedjeljka do petka",
+      "status": "published"
+    },
+    {
+      "id": "inst-004",
+      "name": "Ministarstvo finansija",
+      "slug": "ministarstvo-finansija",
+      "description": "Nadležna institucija za registraciju firmi i privrednih subjekta",
+      "website": "https://mfin.gov.rs",
+      "phone": "+381 11 3618 500",
+      "email": "info@mfin.gov.rs",
+      "working_hours": "08:00-15:30, od ponedjeljka do petka",
+      "status": "published"
+    },
+    {
+      "id": "inst-005",
+      "name": "Pokrajinski zavod za javno zdravlje",
+      "slug": "zavod-javno-zdravlje",
+      "description": "Nadležna institucija za zdravstvene potvrde i vakcine",
+      "website": "https://www.pzzz.rs",
+      "phone": "+381 21 4871 000",
+      "email": "info@pzzz.rs",
+      "working_hours": "08:00-15:30, od ponedjeljka do petka",
+      "status": "published"
+    }
+  ],
+  "life_events": [
+    {
+      "id": "event-001",
+      "category_id": "cat-001",
+      "title": "Istekla mi je lična karta",
+      "description": "Procedura za obnavljanje istkle lične karte",
+      "icon": "🪪",
+      "slug": "istekla-licna-karta",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-002",
+      "category_id": "cat-001",
+      "title": "Izgubio/la sam ličnu kartu",
+      "description": "Procedura za zamenu izgubljene lične karte",
+      "icon": "🔍",
+      "slug": "izgubljena-licna-karta",
+      "status": "published",
+      "sort_order": 2
+    },
+    {
+      "id": "event-003",
+      "category_id": "cat-001",
+      "title": "Istekao mi je pasoš",
+      "description": "Procedura za obnavljanje isteklog pasoša",
+      "icon": "🛂",
+      "slug": "istekao-pasosh",
+      "status": "published",
+      "sort_order": 3
+    },
+    {
+      "id": "event-004",
+      "category_id": "cat-002",
+      "title": "Selim se na novu adresu",
+      "description": "Sve što trebate da uradite kada se preselite",
+      "icon": "🏠",
+      "slug": "selim-se-na-novu-adresu",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-005",
+      "category_id": "cat-002",
+      "title": "Prijavljujem boravište",
+      "description": "Privremeni boravak na drugoj adresi",
+      "icon": "📍",
+      "slug": "prijavljujem-boraviste",
+      "status": "published",
+      "sort_order": 2
+    },
+    {
+      "id": "event-006",
+      "category_id": "cat-003",
+      "title": "Kupujem auto",
+      "description": "Kompletna procedura za kupovinu automobila",
+      "icon": "🚗",
+      "slug": "kupujem-auto",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-007",
+      "category_id": "cat-003",
+      "title": "Prodajem auto",
+      "description": "Procedura za prodaju automobila",
+      "icon": "💰",
+      "slug": "prodajem-auto",
+      "status": "published",
+      "sort_order": 2
+    },
+    {
+      "id": "event-008",
+      "category_id": "cat-003",
+      "title": "Registrujem vozilo",
+      "description": "Registracija vozila na svoje ime",
+      "icon": "📋",
+      "slug": "registrujem-vozilo",
+      "status": "published",
+      "sort_order": 3
+    },
+    {
+      "id": "event-009",
+      "category_id": "cat-002",
+      "title": "Kupujem prvu nekretninu",
+      "description": "Procedura za kupovinu stana ili kuće",
+      "icon": "🏡",
+      "slug": "kupujem-prvi-stan",
+      "status": "published",
+      "sort_order": 3
+    },
+    {
+      "id": "event-010",
+      "category_id": "cat-002",
+      "title": "Prebacujem prebivalište zbog stana/kuće",
+      "description": "Promena prebivališta zbog kupovine nekretnine",
+      "icon": "🔑",
+      "slug": "prebacujem-prebivaliste",
+      "status": "published",
+      "sort_order": 4
+    },
+    {
+      "id": "event-011",
+      "category_id": "cat-005",
+      "title": "Otvaram firmu",
+      "description": "Registracija nove firme i pribavljanje svih dozvola",
+      "icon": "🏢",
+      "slug": "otvaram-firmu",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-012",
+      "category_id": "cat-005",
+      "title": "Otvaram paušalnu radnju",
+      "description": "Registracija paušalne radnje",
+      "icon": "🛍️",
+      "slug": "otvaram-pausalnu-radnju",
+      "status": "published",
+      "sort_order": 2
+    },
+    {
+      "id": "event-013",
+      "category_id": "cat-005",
+      "title": "Zatvaram firmu ili preduzetničku radnju",
+      "description": "Procedura za zatvaranje poslovnog subjekta",
+      "icon": "🚪",
+      "slug": "zatvaram-firmu",
+      "status": "published",
+      "sort_order": 3
+    },
+    {
+      "id": "event-014",
+      "category_id": "cat-004",
+      "title": "Upisujem dete u vrtić",
+      "description": "Procedura za upis u vrtić",
+      "icon": "🧸",
+      "slug": "upisujem-u-vrtic",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-015",
+      "category_id": "cat-004",
+      "title": "Upisujem dete u osnovnu školu",
+      "description": "Procedura za upis u osnovnu školu",
+      "icon": "📚",
+      "slug": "upisujem-u-osnovnu-skolu",
+      "status": "published",
+      "sort_order": 2
+    },
+    {
+      "id": "event-016",
+      "category_id": "cat-004",
+      "title": "Upisujem dete u srednju školu",
+      "description": "Procedura za upis u srednju školu",
+      "icon": "🎓",
+      "slug": "upisujem-u-srednju-skolu",
+      "status": "published",
+      "sort_order": 3
+    },
+    {
+      "id": "event-017",
+      "category_id": "cat-004",
+      "title": "Upisujem se na fakultet ili studiram",
+      "description": "Procedura za upis na fakultet",
+      "icon": "🎓",
+      "slug": "upisujem-na-fakultet",
+      "status": "published",
+      "sort_order": 4
+    },
+    {
+      "id": "event-018",
+      "category_id": "cat-005",
+      "title": "Tražim posao / prijavljujem se na NSZ",
+      "description": "Registracija kod Nacionalne službe za zapošljavanje",
+      "icon": "💼",
+      "slug": "trazim-posao",
+      "status": "published",
+      "sort_order": 4
+    },
+    {
+      "id": "event-019",
+      "category_id": "cat-006",
+      "title": "Treba mi uverenje o nekažnjavanju",
+      "description": "Pribavljanje uverenja o nekažnjavanju",
+      "icon": "✅",
+      "slug": "uverenje-o-nekaznjavanju",
+      "status": "published",
+      "sort_order": 1
+    },
+    {
+      "id": "event-020",
+      "category_id": "cat-006",
+      "title": "Odoh u penziju / rešavam PIO stvari",
+      "description": "Procedura za odlazak u penziju",
+      "icon": "👴",
+      "slug": "odoh-u-penziju",
+      "status": "published",
+      "sort_order": 2
+    }
+  ],
+  "procedures": [
+    {
+      "id": "proc-001",
+      "title": "Prijava prebivališta",
+      "description": "Prijavljuješ novu adresu stanovanja u MUP-u. Ovo je prvi korak nakon preseljenja.",
+      "slug": "prijava-prebivalista",
+      "can_online": false,
+      "can_in_person": true,
+      "can_by_mail": false,
+      "cost_amount": 0,
+      "cost_description": "Besplatno",
+      "processing_time": "1 dan",
+      "official_link": "https://mup.gov.rs",
+      "form_link": null,
+      "status": "published",
+      "last_verified_at": "2026-06-15"
+    },
+    {
+      "id": "proc-002",
+      "title": "Nova lična karta",
+      "description": "Obnavljanje nove lične karte sa novom adresom",
+      "slug": "nova-licna-karta",
+      "can_online": false,
+      "can_in_person": true,
+      "can_by_mail": false,
+      "cost_amount": 1500,
+      "cost_description": "Naknada za izradu",
+      "processing_time": "3-5 radnih dana",
+      "official_link": "https://mup.gov.rs",
+      "form_link": null,
+      "status": "published",
+      "last_verified_at": "2026-06-15"
+    },
+    {
+      "id": "proc-003",
+      "title": "Obnovljenje lične karte",
+      "description": "Obnavljanje istekle lične karte",
+      "slug": "obnova-licne-karte",
+      "can_online": false,
+      "can_in_person": true,
+      "can_by_mail": false,
+      "cost_amount": 1500,
+      "cost_description": "Naknada za izradu",
+      "processing_time": "3-5 radnih dana",
+      "official_link": "https://mup.gov.rs",
+      "form_link": null,
+      "status": "published",
+      "last_verified_at": "2026-06-15"
+    },
+    {
+      "id": "proc-004",
+      "title": "Zamena izgubljene lične karte",
+      "description": "Zamena izgubljene lične karte - sa izjavom o gubitku",
+      "slug": "zamena-izgubljene-lk",
+      "can_online": false,
+      "can_in_person": true,
+      "can_by_mail": false,
+      "cost_amount": 1500,
+      "cost_description": "Naknada za izradu",
+      "processing_time": "3-5 radnih dana",
+      "official_link": "https://mup.gov.rs",
+      "form_link": null,
+      "status": "published",
+      "last_verified_at": "2026-06-15"
+    },
+    {
+      "id": "proc-005",
+      "title": "Pasoš",
+      "description": "Obnavljanje pasoša",
+      "slug": "pasosh",
+      "can_online": false,
+      "can_in_person": true,
+      "can_by_mail": false,
+      "cost_amount": 3000,
+      "cost_description": "Naknada za izradu",
+      "processing_time": "7-15 radnih dana",
+      "official_link": "https://mup.gov.rs",
+      "form_link": null,
+      "status": "published",
+      "last_verified_at": "2026-06-15"
+    }
+  ],
+  "note": "Ovo je minimal seed data sa 5 procedura i 20 životnih događaja. Trebate da dodate više procedura i mapiranja između life_events i procedures preko life_event_procedures tabele. Za kompletan set, videti specifikaciju u 00-product-spec.md §5.1."
+}
