@@ -6,7 +6,7 @@ The Markdown (and SQL/YAML) files in `docs/` are the single source of truth for 
 |---|---|
 | [00-product-spec.md](00-product-spec.md) | Scope, users, functional requirements, business rules (PR-xx), edge cases (ES-xx) |
 | [01-domain-model.md](01-domain-model.md) | Entities, visibility, roles, database rules, search |
-| [01-domain-model.sql](01-domain-model.sql) | Schema DDL: tables, RLS, triggers, `search_content`, AI tables; source of truth for names |
+| [01-domain-model.sql](01-domain-model.sql) | Schema DDL: tables, RLS, triggers, `search_content`, AI tables; source of truth for names. Identical copy of the initial migration in `supabase/migrations/` |
 | [02-user-flows.md](02-user-flows.md) | User and admin flows UF-01..UF-10 with alternative paths |
 | [03-api-contract.yml](03-api-contract.yml) | OpenAPI contract for `/api/v1`; source of truth for endpoints and JSON fields |
 | [04-architecture.md](04-architecture.md) | Stack, structure, data access, AI integration, deployment, environment variables |

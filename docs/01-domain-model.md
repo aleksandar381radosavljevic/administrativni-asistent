@@ -2,7 +2,7 @@
 
 - Version: 1.1
 - Date: 2026-10-05
-- DDL: [01-domain-model.sql](01-domain-model.sql)
+- DDL: [01-domain-model.sql](01-domain-model.sql), a documented copy of the migration [`supabase/migrations/20261006120000_initial_schema.sql`](../supabase/migrations/20261006120000_initial_schema.sql). A unit test keeps the two identical; change both together.
 - Tests: [supabase/tests/schema_smoke.sql](../supabase/tests/schema_smoke.sql)
 
 ## Rules for AI agents

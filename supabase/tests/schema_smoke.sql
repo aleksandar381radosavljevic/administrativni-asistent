@@ -2,7 +2,8 @@
 -- Schema smoke test: RLS, audit, integrity triggers, AI tables, search.
 -- Runs in one transaction and rolls back, so it leaves no data behind.
 -- Prints "PASS: ..." per check and stops at the first "FAIL: ...".
--- Requires docs/01-domain-model.sql to be loaded (see README.md).
+-- Requires the schema (supabase/migrations/) to be loaded, without the seed
+-- (see README.md).
 -- =============================================================================
 
 \set ON_ERROR_STOP on
