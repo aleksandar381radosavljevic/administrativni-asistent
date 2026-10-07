@@ -30,17 +30,28 @@ export const INSTITUTION_SELECT = `${INSTITUTION_SUMMARY_SELECT}, description`;
 export const PROCEDURE_SUMMARY_SELECT =
   "id, title, slug, description, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at";
 
+const LIFE_EVENT_COLUMNS = `id, title, description, slug, icon, estimated_duration, sort_order, status,
+  category:categories!inner(${CATEGORY_SELECT})`;
+
+const EVENT_PROCEDURE_COLUMNS = `sort_order,
+    procedure:procedures!inner(id, title, slug, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at,
+      procedure_institutions(institution:institutions!inner(name, slug, kind)))`;
+
 // `!inner` on the link rows: an event whose procedures are all hidden is
 // itself hidden (open question 1). RLS already hides non-public procedures.
-export const LIFE_EVENT_SUMMARY_SELECT = `id, title, description, slug, icon, estimated_duration, sort_order, status,
-  category:categories!inner(${CATEGORY_SELECT}),
+export const LIFE_EVENT_SUMMARY_SELECT = `${LIFE_EVENT_COLUMNS},
   life_event_procedures!inner(procedure_id)`;
 
-export const LIFE_EVENT_DETAIL_SELECT = `id, title, description, slug, icon, estimated_duration, sort_order, status,
-  category:categories!inner(${CATEGORY_SELECT}),
-  life_event_procedures!inner(sort_order,
-    procedure:procedures!inner(id, title, slug, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at,
-      procedure_institutions(institution:institutions!inner(name, slug, kind))))`;
+export const LIFE_EVENT_DETAIL_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures!inner(${EVENT_PROCEDURE_COLUMNS})`;
+
+// Admin reads (user JWT, RLS admin policies) see every status, and a new
+// draft event has no procedures yet, so the link rows are not `!inner`.
+export const ADMIN_LIFE_EVENT_SUMMARY_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures(procedure_id)`;
+
+export const ADMIN_LIFE_EVENT_DETAIL_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures(${EVENT_PROCEDURE_COLUMNS})`;
 
 export const PROCEDURE_DETAIL_SELECT = `${PROCEDURE_SUMMARY_SELECT}, cost_description, official_link, form_link,
   steps(id, sort_order, title, description, link_url, link_label),

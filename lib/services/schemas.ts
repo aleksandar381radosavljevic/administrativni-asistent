@@ -44,7 +44,7 @@ export const validationErrorSchema = errorSchema.extend({
 
 // ---- Requests -----------------------------------------------------------------
 
-export const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
+const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 const offsetSchema = z.coerce.number().int().min(0).default(0);
 
 export const paginationQuerySchema = z.object({
