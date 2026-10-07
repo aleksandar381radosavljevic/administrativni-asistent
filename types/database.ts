@@ -525,6 +525,24 @@ export type Database = {
     };
     Functions: {
       aa_normalize: { Args: { input: string }; Returns: string };
+      admin_ai_query_stats: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: {
+          count: number;
+          life_event_id: string;
+          slug: string;
+          title: string;
+          unanswered_count: number;
+        }[];
+      };
+      admin_save_procedure: {
+        Args: { p_id?: string; p_procedure: Json };
+        Returns: string;
+      };
+      admin_set_life_event_procedures: {
+        Args: { p_life_event_id: string; p_procedures: Json };
+        Returns: undefined;
+      };
       ai_rate_limit_hit: {
         Args: { p_ip_hash: string; p_limit: number };
         Returns: boolean;
