@@ -1,6 +1,12 @@
 // Contract-shaped sample data for unit tests, based on the test seed.
 import type {
+  AiQueryListResponse,
+  AiQueryStatsResponse,
+  AuditLogListResponse,
+  Category,
   CategoryListResponse,
+  Dependency,
+  Institution,
   InstitutionDetail,
   InstitutionListResponse,
   ProcedureListResponse,
@@ -8,9 +14,10 @@ import type {
   LifeEventListResponse,
   ProcedureDetail,
   SearchResponse,
+  Synonym,
 } from "@/lib/services/schemas";
 
-export const category = {
+export const category: Category = {
   id: "10000000-0000-4000-8000-000000000002",
   name: "[TEST] Preseljenje i adresa",
   slug: "preseljenje-i-adresa",
@@ -166,4 +173,65 @@ export const searchResult: SearchResponse = {
   procedures: [procedureSummary],
   institutions: [institution],
   total_count: 3,
+};
+
+// ---- Admin --------------------------------------------------------------------
+
+export const ADMIN_ID = "aaaaaaaa-0000-4000-8000-000000000001";
+
+export const adminInstitution: Institution = {
+  ...institution,
+  description: "Ministarstvo unutrašnjih poslova",
+};
+
+export const dependency: Dependency = lifeEventDetail.dependencies[0];
+
+export const synonym: Synonym = {
+  id: "70000000-0000-4000-8000-000000000001",
+  term: "putna isprava",
+  maps_to: "pasoš",
+  created_at: "2026-10-06T12:00:00+00:00",
+};
+
+export const aiQueryList: AiQueryListResponse = {
+  data: [
+    {
+      id: "80000000-0000-4000-8000-000000000001",
+      query_text: "Selim se, JMBG [JMBG], šta mi treba?",
+      was_answered: true,
+      matched_event_id: lifeEventDetail.id,
+      created_at: "2026-10-06T12:00:00+00:00",
+    },
+  ],
+  pagination: { total: 1, limit: 20, offset: 0 },
+};
+
+export const aiQueryStats: AiQueryStatsResponse = {
+  data: [
+    {
+      life_event: {
+        id: lifeEventDetail.id,
+        slug: lifeEventDetail.slug,
+        title: lifeEventDetail.title,
+      },
+      count: 3,
+      unanswered_count: 1,
+    },
+    { life_event: null, count: 2, unanswered_count: 2 },
+  ],
+};
+
+export const auditLog: AuditLogListResponse = {
+  data: [
+    {
+      id: "90000000-0000-4000-8000-000000000001",
+      entity_type: "procedures",
+      entity_id: procedureDetail.id,
+      action: "archive",
+      changed_by: ADMIN_ID,
+      changed_at: "2026-10-06T12:00:00+00:00",
+      diff: { status: { old: "published", new: "archived" } },
+    },
+  ],
+  pagination: { total: 1, limit: 20, offset: 0 },
 };
