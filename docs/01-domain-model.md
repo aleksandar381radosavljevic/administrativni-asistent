@@ -2,7 +2,7 @@
 
 - Version: 1.1
 - Date: 2026-10-05
-- DDL: [01-domain-model.sql](01-domain-model.sql), a documented copy of the migration [`supabase/migrations/20261006120000_initial_schema.sql`](../supabase/migrations/20261006120000_initial_schema.sql). A unit test keeps the two identical; change both together.
+- DDL: [01-domain-model.sql](01-domain-model.sql), a documented copy of the migration [`supabase/migrations/20261006120000_initial_schema.sql`](../supabase/migrations/20261006120000_initial_schema.sql). A unit test keeps the two identical; change both together. Later migrations in `supabase/migrations/` add functions only (see "Admin write functions").
 - Tests: [supabase/tests/schema_smoke.sql](../supabase/tests/schema_smoke.sql)
 
 ## Rules for AI agents
@@ -283,6 +283,16 @@ Roles follow [ADR 0004](decisions/0004-admin-writes-with-user-jwt.md).
 - A `BEFORE` trigger on every content table rejects writes from `anon`, `authenticated` or `service_role` without an admin JWT. Why: RLS already stops anon and non-admins, but the service role bypasses RLS, and this keeps it out of content.
 - An `AFTER` trigger on every content table writes one `audit_log` row per changed row, with `auth.uid()` as `changed_by`. No-op updates are not logged.
 - `audit_log` has no INSERT, UPDATE or DELETE privilege for any API role, and a trigger rejects UPDATE, DELETE and TRUNCATE even for the table owner.
+
+### Admin write functions
+
+PostgREST runs every request in its own transaction, but some admin writes take several statements that must commit together, because the deferred publish rules and the deferred unique `sort_order` constraints are checked at commit. These run as one RPC call each (migration `20261007120000_admin_write_functions.sql`):
+
+- `public.admin_save_procedure(p_procedure jsonb, p_id uuid default null) returns uuid` creates or replaces a procedure with its steps, documents and institution links (03 `ProcedureWrite`). Steps and documents have no id in the contract, so they are matched by `sort_order`: the row at the same position is updated, missing positions are deleted, new ones inserted. Unchanged rows leave no audit entry. Unknown `p_id` raises `P0002` (API: 404).
+- `public.admin_set_life_event_procedures(p_life_event_id uuid, p_procedures jsonb)` replaces an event's procedure links and order; dependencies of removed procedures go with them through the FK cascade, audited. Unknown event raises `P0002`.
+- `public.admin_ai_query_stats(p_from timestamptz, p_to timestamptz)` counts `ai_queries` per matched life event for 03 `adminAiQueryStats`.
+
+All three are `SECURITY INVOKER` and executable by `authenticated` only, so RLS, the write guard and the audit triggers apply exactly as for direct table writes; a non-admin gets `42501` or no rows.
 
 ## Business rules in the database
 

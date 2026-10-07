@@ -2596,15 +2596,20 @@ components:
           type: string
           description: |
             UUID of the changed row. For link rows without their own id
-            (life event procedures, dependencies) the trigger records the
-            life event id.
+            the trigger records the owning entity: the life event id for life
+            event procedures and dependencies, the procedure id for
+            procedure institutions.
           format: uuid
         action:
           $ref: '#/components/schemas/AuditAction'
         changed_by:
           type: string
           format: uuid
-          description: Admin user id (`auth.uid()` at the time of the change)
+          nullable: true
+          description: |
+            Admin user id (`auth.uid()` at the time of the change). Null only
+            for changes made by the database owner (migrations, seeds), as the
+            `audit_log.changed_by` column allows.
         changed_at:
           type: string
           format: date-time
