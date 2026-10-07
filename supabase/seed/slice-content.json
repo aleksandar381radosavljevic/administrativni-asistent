@@ -1,0 +1,141 @@
+{
+  "note": "Fictional test content that completes prototype-seed-data.json for the first vertical slice (ADR 0015). The prototype file has no steps, documents, links or dependencies, which the new schema requires before anything can be published. Nothing here is verified; never load it into production.",
+  "icons": {
+    "cat-001": "id-card",
+    "cat-002": "house",
+    "event-001": "id-card",
+    "event-002": "search",
+    "event-003": "plane",
+    "event-004": "house",
+    "event-010": "key-round"
+  },
+  "institution_kinds": {
+    "inst-001": "government"
+  },
+  "life_event_procedures": {
+    "event-001": ["proc-003"],
+    "event-002": ["proc-004"],
+    "event-003": ["proc-005"],
+    "event-004": ["proc-001", "proc-002"],
+    "event-010": ["proc-001", "proc-002"]
+  },
+  "dependencies": [
+    {
+      "life_event": "event-004",
+      "procedure": "proc-002",
+      "depends_on": "proc-001"
+    },
+    {
+      "life_event": "event-010",
+      "procedure": "proc-002",
+      "depends_on": "proc-001"
+    }
+  ],
+  "procedure_institutions": {
+    "proc-001": [
+      {
+        "institution": "inst-001",
+        "note": "Prijavu podnosiš u policijskoj stanici nadležnoj za novu adresu."
+      }
+    ],
+    "proc-002": [{ "institution": "inst-001", "note": null }],
+    "proc-003": [{ "institution": "inst-001", "note": null }],
+    "proc-004": [{ "institution": "inst-001", "note": null }],
+    "proc-005": [{ "institution": "inst-001", "note": null }]
+  },
+  "steps": {
+    "proc-001": [
+      {
+        "title": "Pripremi dokumente",
+        "description": "Ponesi ličnu kartu i dokaz o pravu na stanovanje na novoj adresi."
+      },
+      {
+        "title": "Idi u policijsku stanicu",
+        "description": "Predaj prijavu prebivališta na šalteru policijske stanice."
+      },
+      {
+        "title": "Preuzmi potvrdu",
+        "description": "Sačuvaj potvrdu o prijavi, trebaće ti za novu ličnu kartu."
+      }
+    ],
+    "proc-002": [
+      {
+        "title": "Zakaži termin",
+        "description": "Zakaži termin za izdavanje lične karte."
+      },
+      {
+        "title": "Plati naknadu",
+        "description": "Uplati naknadu za izradu i ponesi dokaz o uplati."
+      },
+      {
+        "title": "Predaj zahtev",
+        "description": "Na šalteru predaj zahtev, staru ličnu kartu i dokaz o uplati."
+      }
+    ],
+    "proc-003": [
+      {
+        "title": "Plati naknadu",
+        "description": "Uplati naknadu za izradu i ponesi dokaz o uplati."
+      },
+      {
+        "title": "Predaj zahtev",
+        "description": "Na šalteru predaj zahtev i staru ličnu kartu."
+      }
+    ],
+    "proc-004": [
+      {
+        "title": "Prijavi gubitak",
+        "description": "Na šalteru daj izjavu o gubitku lične karte."
+      },
+      {
+        "title": "Predaj zahtev za novu ličnu kartu",
+        "description": "Predaj zahtev i dokaz o uplati naknade."
+      }
+    ],
+    "proc-005": [
+      {
+        "title": "Zakaži termin",
+        "description": "Zakaži termin za predaju zahteva za pasoš."
+      },
+      {
+        "title": "Predaj zahtev",
+        "description": "Predaj zahtev, ličnu kartu i dokaz o uplati naknade."
+      },
+      {
+        "title": "Preuzmi pasoš",
+        "description": "Pasoš preuzimaš lično kad stigne obaveštenje."
+      }
+    ]
+  },
+  "documents": {
+    "proc-001": [
+      { "name": "Lična karta", "is_required": true, "note": null },
+      {
+        "name": "Dokaz o pravu na stanovanje",
+        "is_required": true,
+        "note": "Ugovor o zakupu ili dokaz o vlasništvu."
+      }
+    ],
+    "proc-002": [
+      { "name": "Stara lična karta", "is_required": true, "note": null },
+      { "name": "Dokaz o uplati naknade", "is_required": true, "note": null }
+    ],
+    "proc-003": [
+      { "name": "Stara lična karta", "is_required": true, "note": null },
+      { "name": "Dokaz o uplati naknade", "is_required": true, "note": null }
+    ],
+    "proc-004": [
+      { "name": "Izjava o gubitku", "is_required": true, "note": null },
+      { "name": "Dokaz o uplati naknade", "is_required": true, "note": null }
+    ],
+    "proc-005": [
+      { "name": "Lična karta", "is_required": true, "note": null },
+      { "name": "Stari pasoš", "is_required": false, "note": "Ako ga imaš." },
+      { "name": "Dokaz o uplati naknade", "is_required": true, "note": null }
+    ]
+  },
+  "synonyms": [
+    { "term": "putna isprava", "maps_to": "pasoš" },
+    { "term": "licna isprava", "maps_to": "lična karta" }
+  ]
+}

@@ -1,0 +1,58 @@
+# Checks only, no secrets and no deploy: Vercel's Git integration deploys
+# previews and production (ADR 0014).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx ai-instructions sync --check
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  sql:
+    name: SQL tests (PostgreSQL 16)
+    runs-on: ubuntu-latest
+    # A plain PostgreSQL 16 container with the bare Supabase stubs: runs the
+    # migrations, the schema smoke test, the seed and the seed check
+    # (supabase/tests/README.md). Starting the full local Supabase stack in CI
+    # is the follow-up for integration and Playwright tests.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - run: npm run test:db

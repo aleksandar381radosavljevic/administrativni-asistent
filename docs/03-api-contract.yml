@@ -1,0 +1,2737 @@
+openapi: 3.0.3
+
+info:
+  title: Administrativni Asistent API
+  version: 1.1.0
+  contact:
+    name: Administrativni Asistent
+  description: |
+    REST API for Administrativni Asistent, a web app that guides citizens of Serbia
+    through administrative procedures by life event.
+
+    Per [ADR 0003](decisions/0003-full-rest-api.md) this contract is the single data
+    contract of the app: every read and write goes through Next.js route handlers
+    that implement it, and server-rendered pages call the same service layer. A
+    future mobile client uses the same endpoints and never talks to the database
+    directly.
+
+    ## Authentication and authorization
+
+    - **Public endpoints** need no authentication. The server reads with the
+      Supabase anon key under RLS, never with the service role key
+      ([ADR 0004](decisions/0004-admin-writes-with-user-jwt.md)).
+    - **Admin endpoints** (`/api/v1/admin/**`) need a Supabase Auth session,
+      sent either as the Supabase session cookie (the admin panel in the browser)
+      or as `Authorization: Bearer <access token>` (other clients).
+      - Missing, invalid or expired session: `401 Unauthorized`.
+      - Valid token whose JWT lacks `app_metadata.role = 'admin'`: `403 Forbidden`.
+      - The route handler checks the role itself (Next.js middleware is only a
+        redirect convenience) and forwards the caller's JWT to Supabase. RLS write
+        policies require the admin claim, and database triggers write `audit_log`
+        with `auth.uid()`. The service role key is never used for admin writes.
+    - Admin accounts are created manually; there is no self sign-up.
+
+    ## Conventions
+
+    - JSON field names are `snake_case`, matching the database and the generated
+      Supabase types. Clients do not map them to camelCase.
+    - Content entities (life events, procedures, institutions) are never deleted:
+      they are archived with `status = archived`. Steps, documents, link rows
+      (life event to procedure, procedure to institution, dependencies) and
+      synonyms are deleted, and every deletion is recorded in the audit log.
+      Steps, documents and institution links are deleted by leaving them out of
+      the full lists sent with `PUT /admin/procedures/{id}`.
+    - Money is a **decimal string** with two decimals (`"1250.00"`), never a JSON
+      number, so no client rounds it through a float. Amounts are in RSD.
+    - Public endpoints return only `published` records. A procedure that is not
+      linked to at least one published life event is not public: it is left out
+      of lists and search, and its detail URL returns 404
+      ([ADR 0011](decisions/0011-content-and-copy-defaults.md), PR-05).
+    - A procedure is stale (`is_stale: true`) when `last_verified_at` is older
+      than 6 months **or is null** (never verified) (PR-07, ADR 0011).
+    - Dependencies on procedures that are not public are filtered out of public
+      responses, so a procedure is never blocked by something the citizen cannot see.
+    - Search accepts Latin and Cyrillic script and text without diacritics
+      (`pasos` finds `pasoš`).
+    - User-facing `message` strings in errors are Serbian, Latin script, informal
+      "ti" ([ADR 0011](decisions/0011-content-and-copy-defaults.md)).
+    - Pagination uses `limit` and `offset`; list responses carry `pagination`.
+
+    ## AI assistant and personal data
+
+    - The assistant answers only from published content in the database (PR-12)
+      and gives no legal advice (PR-14).
+    - Retrieval follows [ADR 0006](decisions/0006-ai-retrieval-via-catalog-in-prompt.md):
+      the catalog of published life events and procedures sits in a cached system
+      prompt, the model picks IDs with structured output, and the server loads
+      those records and answers from them. `was_answered` comes from structured
+      output, not from parsing the answer text.
+    - Per [ADR 0007](decisions/0007-redact-pii-in-ai-chat.md), personal data
+      (JMBG, phone numbers, email addresses, document numbers) is redacted
+      **before** the text is sent to Anthropic and before it is stored in
+      `ai_queries`. Redaction is pattern-based and best effort. Stored queries are
+      deleted after 90 days. Request bodies on this route are not sent to Sentry.
+    - The conversation is held by the client in memory and sent in full on each
+      request; the server keeps no session.
+
+    ## Environments
+
+    Production and staging run as separate Vercel deployments, each with its own
+    Supabase project ([ADR 0003](decisions/0003-full-rest-api.md)). Vercel preview
+    deployments use the staging Supabase project.
+
+    ## Open questions
+
+    - **Hostnames.** The API is served by the Next.js app under `/api/v1`. The
+      production and staging hostnames in `servers` are placeholders until the
+      domain is registered.
+    - **Category lifecycle.** `categories` has no `status`, so there is no way to
+      retire a category. v1 offers create and update only; a category that still
+      has life events cannot be removed. Add `status` if retiring categories is needed.
+    - **Synonym targets.** `synonyms.maps_to` stays a free-text term. Renaming a procedure does not update synonyms; the admin keeps
+      them in step by hand. A link to a target entity can replace it later.
+    - **Rate limit size.** 10 AI requests per hashed IP per clock hour, and each
+      follow-up question counts. Mobile carriers in Serbia use CGNAT, so many users
+      can share one IP; revisit the limit once real traffic is known.
+    - **Conversation limits.** Default: at most 20 messages per request, 1000
+      characters per message.
+
+    ## Changes from v1.0
+
+    - Translated descriptions to English; Serbian kept for user-facing examples and messages.
+    - Servers now point at the Next.js route handlers (`/api/v1`) with production, staging and local entries, following ADR 0003.
+    - `AiChatRequest` takes `messages[]` history instead of a single `message`, so follow-up questions (UF-03 step 6) work (ADR 0003).
+    - `AiChatResponse` returns `answer`, `was_answered`, `matched_life_event` and `procedures` as id/slug/title references chosen by the model, plus a `redaction` note (ADR 0006, ADR 0007).
+    - Added 503 `ai_unavailable` for when the Anthropic spending limit is reached or the API is down; 08 had no message for it.
+    - Rate-limit message now names the hourly window and the response carries `Retry-After` (the old text said "a few seconds" for a 1-hour window).
+    - Every admin operation documents 403 for an authenticated non-admin (ADR 0003, ADR 0004).
+    - Admin auth accepts the Supabase session cookie (admin panel) as well as a Bearer token.
+    - Documented that steps, documents and institution links removed in a procedure update are deleted and audited, while content entities are only archived.
+    - Added admin endpoints for categories, synonyms and a read-only audit log (ADR 0003); 08 called a `/synonyms` endpoint that did not exist — synonyms are applied inside `/search`, so no public synonym endpoint is needed.
+    - Added admin GET by id for life events, procedures and institutions so the admin can load drafts into edit forms (public endpoints only return published records).
+    - Dependencies moved under `/admin/life-events/{id}/dependencies`, with a path-based DELETE and no request body (ADR 0003); dependencies belong to a life event, not to a procedure alone.
+    - Adding a dependency between procedures that are not both in the life event returns 422 (was accepted by the v1.0 schema).
+    - `cost_amount` is a decimal string, not a float; added `cost_type` (ADR 0003, ADR 0008).
+    - Added `institutions.address`, `institutions.kind` and `life_events.estimated_duration` (ADR 0008); institutions are described as organizations.
+    - `is_stale` is true for never-verified procedures; stale-procedures list includes them first (ADR 0011).
+    - Public responses exclude procedures not linked to a published life event, and filter dependencies on non-public procedures (PR-05, ADR 0011).
+    - Replacing a life event's procedure list documents that link rows and dependencies of removed procedures are deleted and audited, and rejects duplicate `sort_order` (422).
+    - Status PATCH endpoints are named "change status" (they were labelled "archive" but accept any status); publishing a life event without procedures returns 422 (PR-04).
+    - Filled missing responses: bodies for 200 on institution status change and procedure list replacement, 400/422 on updates.
+    - `AiQuery.matched_event_id` documented with the redaction and 90-day retention; descriptions no longer promise that no personal data is ever stored (ADR 0007).
+    - Error messages use informal "ti" (ADR 0011).
+    - Life event detail lists each procedure's institutions (`name`, `slug`, `kind`) so 08 can show them without extra calls.
+    - Procedure detail adds `life_events[{slug, title}]` (published only in public responses) and the per-link institution `note` from `procedure_institutions`, which v1.0 did not expose; `ProcedureWrite.institution_notes` makes the note editable.
+    - `GET /admin/ai-queries` accepts `from`/`to`; new `GET /admin/ai-queries/stats` returns query counts per matched life event ("top topics", UF-10).
+
+servers:
+  - url: https://administrativniasistent.rs/api/v1
+    description: Production (Vercel, production Supabase project)
+  - url: https://staging.administrativniasistent.rs/api/v1
+    description: Staging (Vercel, staging Supabase project)
+  - url: http://localhost:3000/api/v1
+    description: Local development (local Supabase stack)
+
+tags:
+  - name: Categories
+    description: Life event categories
+  - name: LifeEvents
+    description: Life events, named in the citizen's own words
+  - name: Procedures
+    description: Administrative procedures, the central entity
+  - name: Institutions
+    description: Organizations responsible for procedures (government, bank, employer, other)
+  - name: Search
+    description: Free-text search
+  - name: AI
+    description: AI assistant
+  - name: Admin / Categories
+    description: Admin, category management
+  - name: Admin / LifeEvents
+    description: Admin, life event management, procedure order and dependencies
+  - name: Admin / Procedures
+    description: Admin, procedure management (steps and documents are edited inside the procedure)
+  - name: Admin / Institutions
+    description: Admin, institution management
+  - name: Admin / Synonyms
+    description: Admin, search synonyms
+  - name: Admin / Queries
+    description: Admin, AI queries and stale content warnings
+  - name: Admin / Audit
+    description: Admin, read-only audit log
+
+# =============================================================================
+# PATHS
+# =============================================================================
+
+paths:
+
+  # ── CATEGORIES ─────────────────────────────────────────────────────────────
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      description: Returns all life event categories, ordered by `sort_order`.
+      operationId: listCategories
+      security: []
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryListResponse'
+              example:
+                data:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    name: "Lična dokumenta"
+                    slug: "licna-dokumenta"
+                    icon: "id-card"
+                    sort_order: 1
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── LIFE EVENTS ────────────────────────────────────────────────────────────
+
+  /life-events:
+    get:
+      tags: [LifeEvents]
+      summary: List published life events
+      description: Returns published life events, optionally filtered by category.
+      operationId: listLifeEvents
+      security: []
+      parameters:
+        - name: category_slug
+          in: query
+          description: Filter by category slug
+          schema:
+            type: string
+          example: licna-dokumenta
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Life events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /life-events/{slug}:
+    get:
+      tags: [LifeEvents]
+      summary: Get a life event
+      description: |
+        Returns one published life event with its published procedures in order
+        and the dependencies between them. Dependencies that involve a
+        non-public procedure are left out.
+      operationId: getLifeEvent
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/SlugPath'
+      responses:
+        '200':
+          description: Life event with procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── PROCEDURES ─────────────────────────────────────────────────────────────
+
+  /procedures:
+    get:
+      tags: [Procedures]
+      summary: List public procedures
+      description: |
+        Returns published procedures that belong to at least one published life
+        event (PR-05). Optionally filtered by institution.
+      operationId: listProcedures
+      security: []
+      parameters:
+        - name: institution_slug
+          in: query
+          description: Filter by institution slug
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /procedures/{slug}:
+    get:
+      tags: [Procedures]
+      summary: Get a procedure
+      description: |
+        Returns a procedure with its steps, documents and institutions.
+        Returns 404 when the procedure is not published or is not linked to any
+        published life event (PR-05). `is_stale` is true when `last_verified_at`
+        is older than 6 months or null.
+      operationId: getProcedure
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/SlugPath'
+      responses:
+        '200':
+          description: Procedure with all details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── INSTITUTIONS ───────────────────────────────────────────────────────────
+
+  /institutions:
+    get:
+      tags: [Institutions]
+      summary: List published institutions
+      operationId: listInstitutions
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Institutions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /institutions/{slug}:
+    get:
+      tags: [Institutions]
+      summary: Get an institution
+      description: Returns a published institution with its public procedures.
+      operationId: getInstitution
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/SlugPath'
+      responses:
+        '200':
+          description: Institution with procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── SEARCH ─────────────────────────────────────────────────────────────────
+
+  /search:
+    get:
+      tags: [Search]
+      summary: Free-text search
+      description: |
+        Searches public life events, procedures and institutions. Synonyms and
+        slang (for example "karton", "papiri za auto") are applied server-side;
+        there is no separate synonym endpoint. Accepts Latin and Cyrillic script
+        and text without diacritics. Target response time is under 1 second.
+      operationId: search
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search term
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 200
+          example: pasoš
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Results grouped by type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── AI ─────────────────────────────────────────────────────────────────────
+
+  /ai/chat:
+    post:
+      tags: [AI]
+      summary: Ask the AI assistant
+      description: |
+        Sends the conversation so far and returns the assistant's answer.
+
+        - The client keeps the conversation in memory and sends it in full; the
+          server stores no session. The last message must have `role: user`.
+        - Before the call to Anthropic and before the insert into `ai_queries`,
+          the server redacts personal data in **every** message (ADR 0007). Only
+          the redacted last user message is stored in `ai_queries`.
+        - The assistant answers only from published content (PR-12, PR-13) and
+          gives no legal advice (PR-14). The model picks the relevant life event
+          and procedures from the cached catalog; the server loads their details
+          and returns references so the client can link to them (ADR 0006).
+        - Rate limit: 10 requests per hashed IP per clock hour. Every request,
+          including a follow-up question, counts. The raw IP is never stored.
+      operationId: aiChat
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiChatRequest'
+            examples:
+              first_question:
+                summary: First question
+                value:
+                  messages:
+                    - role: user
+                      content: "Preselio sam se iz Novog Sada u Beograd, šta treba da uradim?"
+              follow_up:
+                summary: Follow-up question with history
+                value:
+                  messages:
+                    - role: user
+                      content: "Preselio sam se iz Novog Sada u Beograd, šta treba da uradim?"
+                    - role: assistant
+                      content: "Prvo prijavi prebivalište u MUP-u na novoj adresi..."
+                    - role: user
+                      content: "Mogu li to da uradim online?"
+      responses:
+        '200':
+          description: The assistant's answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiChatResponse'
+              example:
+                answer: "Kad se preseliš, prvo prijavi prebivalište u MUP-u na novoj adresi. Posle toga promeni adresu u ličnoj karti i saobraćajnoj dozvoli."
+                was_answered: true
+                matched_life_event:
+                  id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  slug: "selim-se"
+                  title: "Selim se"
+                procedures:
+                  - id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427"
+                    slug: "prijava-prebivalista"
+                    title: "Prijava prebivališta"
+                redaction:
+                  applied: false
+                  kinds: []
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/AiUnavailable'
+
+  # ── ADMIN / CATEGORIES ─────────────────────────────────────────────────────
+
+  /admin/categories:
+    post:
+      tags: [Admin / Categories]
+      summary: Create a category
+      description: Admins list categories with the public `GET /categories`.
+      operationId: adminCreateCategory
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWrite'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/categories/{id}:
+    put:
+      tags: [Admin / Categories]
+      summary: Update a category
+      operationId: adminUpdateCategory
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWrite'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / LIFE EVENTS ────────────────────────────────────────────────────
+
+  /admin/life-events:
+    get:
+      tags: [Admin / LifeEvents]
+      summary: List all life events (admin)
+      description: Returns life events in every status, including draft and archived.
+      operationId: adminListLifeEvents
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Life events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin / LifeEvents]
+      summary: Create a life event
+      description: |
+        Creates a life event. A new event has no procedures yet, so it can only be
+        created as `draft`; `published` returns 422 (PR-04).
+      operationId: adminCreateLifeEvent
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifeEventWrite'
+      responses:
+        '201':
+          description: Life event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/life-events/{id}:
+    get:
+      tags: [Admin / LifeEvents]
+      summary: Get a life event in any status (admin)
+      description: Returns the event with all linked procedures and dependencies, whatever their status.
+      operationId: adminGetLifeEvent
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Life event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Admin / LifeEvents]
+      summary: Update a life event
+      description: Setting `status` to `published` on an event with no procedures returns 422 (PR-04).
+      operationId: adminUpdateLifeEvent
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifeEventWrite'
+      responses:
+        '200':
+          description: Life event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags: [Admin / LifeEvents]
+      summary: Change a life event's status
+      description: |
+        Publishes, unpublishes or archives the event. Archived content stays in
+        the database. Publishing an event with no procedures returns 422 (PR-04).
+      operationId: adminSetLifeEventStatus
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+      responses:
+        '200':
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/life-events/{id}/procedures:
+    put:
+      tags: [Admin / LifeEvents]
+      summary: Set the procedures of a life event and their order
+      description: |
+        Replaces the full list of procedures in this life event with a new order
+        (PR-06, PR-08). Link rows for procedures no longer in the list are
+        deleted, together with any dependencies that involve those procedures in
+        this event; each deletion is recorded in the audit log. The procedures
+        themselves are not changed.
+
+        Each `procedure_id` and each `sort_order` must be unique in the list
+        (422 otherwise). An empty list on a published event returns 422 (PR-04).
+      operationId: adminSetLifeEventProcedures
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifeEventProceduresWrite'
+      responses:
+        '200':
+          description: Procedures updated; returns the event with its new procedure list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeEventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/life-events/{id}/dependencies:
+    get:
+      tags: [Admin / LifeEvents]
+      summary: List dependencies within a life event
+      operationId: adminListDependencies
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Dependencies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DependencyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin / LifeEvents]
+      summary: Add a dependency
+      description: |
+        Records that `procedure_id` cannot start until `depends_on_id` is done,
+        within this life event (PR-09).
+
+        - Both procedures must already be in this life event: 422 otherwise.
+        - A procedure cannot depend on itself: 422.
+        - A dependency that would create a cycle returns 409 (PR-10). The check
+          runs in a database trigger, serialized per life event, so two
+          concurrent requests cannot create a cycle together.
+      operationId: adminAddDependency
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DependencyWrite'
+      responses:
+        '201':
+          description: Dependency created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dependency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: The dependency already exists or would create a cycle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                circular:
+                  value:
+                    error: circular_dependency
+                    message: "Ova zavisnost bi napravila krug između procedura."
+                duplicate:
+                  value:
+                    error: conflict
+                    message: "Ova zavisnost već postoji."
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/life-events/{id}/dependencies/{procedure_id}/{depends_on_id}:
+    delete:
+      tags: [Admin / LifeEvents]
+      summary: Remove a dependency
+      description: Deletes one dependency row. The deletion is recorded in the audit log. No request body.
+      operationId: adminRemoveDependency
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: procedure_id
+          in: path
+          required: true
+          description: The procedure that depends on the other one
+          schema:
+            type: string
+            format: uuid
+        - name: depends_on_id
+          in: path
+          required: true
+          description: The procedure that must be done first
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Dependency removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / PROCEDURES ─────────────────────────────────────────────────────
+
+  /admin/procedures:
+    get:
+      tags: [Admin / Procedures]
+      summary: List all procedures (admin)
+      description: Returns procedures in every status, including ones not linked to any life event.
+      operationId: adminListProcedures
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin / Procedures]
+      summary: Create a procedure
+      description: |
+        Creates a procedure with its steps, documents and institution links.
+        Documents belong to this procedure only
+        ([ADR 0005](decisions/0005-documents-per-procedure.md)).
+
+        **Validation (422):**
+        - At least one step (PR-01).
+        - At least one institution (PR-02).
+        - At least one of `can_online`, `can_in_person`, `can_by_mail` is true (PR-03).
+        - `cost_amount` is required when `cost_type` is `fixed` and must be null otherwise.
+      operationId: adminCreateProcedure
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureWrite'
+      responses:
+        '201':
+          description: Procedure created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/procedures/{id}:
+    get:
+      tags: [Admin / Procedures]
+      summary: Get a procedure in any status (admin)
+      operationId: adminGetProcedure
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Procedure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Admin / Procedures]
+      summary: Update a procedure
+      description: |
+        Replaces the procedure, including its full lists of steps, documents and
+        institution links. Steps and documents left out of the lists are
+        deleted, as are institution links left out of `institution_ids`; each
+        deletion is recorded in the audit log. Same validation as create.
+      operationId: adminUpdateProcedure
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedureWrite'
+      responses:
+        '200':
+          description: Procedure updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags: [Admin / Procedures]
+      summary: Change a procedure's status or verification date
+      description: |
+        Use `last_verified_at` to confirm that the content is still accurate
+        (PR-07). At least one field is required.
+      operationId: adminPatchProcedure
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcedurePatch'
+      responses:
+        '200':
+          description: Procedure updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / INSTITUTIONS ───────────────────────────────────────────────────
+
+  /admin/institutions:
+    get:
+      tags: [Admin / Institutions]
+      summary: List all institutions (admin)
+      operationId: adminListInstitutions
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Institutions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstitutionListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin / Institutions]
+      summary: Create an institution
+      operationId: adminCreateInstitution
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionWrite'
+      responses:
+        '201':
+          description: Institution created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/institutions/{id}:
+    get:
+      tags: [Admin / Institutions]
+      summary: Get an institution in any status (admin)
+      operationId: adminGetInstitution
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Institution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [Admin / Institutions]
+      summary: Update an institution
+      operationId: adminUpdateInstitution
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionWrite'
+      responses:
+        '200':
+          description: Institution updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags: [Admin / Institutions]
+      summary: Change an institution's status
+      operationId: adminSetInstitutionStatus
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+      responses:
+        '200':
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Institution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / SYNONYMS ───────────────────────────────────────────────────────
+
+  /admin/synonyms:
+    get:
+      tags: [Admin / Synonyms]
+      summary: List synonyms
+      operationId: adminListSynonyms
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - name: q
+          in: query
+          description: Filter by text contained in `term` or `maps_to`
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Synonyms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynonymListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Admin / Synonyms]
+      summary: Create a synonym
+      operationId: adminCreateSynonym
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynonymWrite'
+            example:
+              term: "karton"
+              maps_to: "izvod iz matične knjige"
+      responses:
+        '201':
+          description: Synonym created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Synonym'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/synonyms/{id}:
+    put:
+      tags: [Admin / Synonyms]
+      summary: Update a synonym
+      operationId: adminUpdateSynonym
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynonymWrite'
+      responses:
+        '200':
+          description: Synonym updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Synonym'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Admin / Synonyms]
+      summary: Delete a synonym
+      description: Synonyms are lookup rows, not content, so they are deleted rather than archived. The deletion is recorded in the audit log.
+      operationId: adminDeleteSynonym
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Synonym deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / QUERIES ────────────────────────────────────────────────────────
+
+  /admin/ai-queries:
+    get:
+      tags: [Admin / Queries]
+      summary: List AI queries
+      description: |
+        Returns anonymous AI queries from the last 90 days, newest first, so the
+        admin can see what content is missing (UF-10). `query_text` is the
+        redacted text (ADR 0007).
+      operationId: adminListAiQueries
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - name: was_answered
+          in: query
+          description: Filter by whether the assistant found an answer in the content
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: AI queries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiQueryListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/ai-queries/stats:
+    get:
+      tags: [Admin / Queries]
+      summary: Count AI queries per matched life event (top topics)
+      description: |
+        Returns the number of AI queries per matched life event in the period,
+        highest count first. Queries with no matched event are grouped under
+        `life_event: null`. Without `from`/`to` the whole 90-day retention
+        window is counted.
+      operationId: adminAiQueryStats
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Counts per life event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiQueryStatsResponse'
+              example:
+                data:
+                  - life_event:
+                      id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                      slug: "selim-se"
+                      title: "Selim se"
+                    count: 42
+                    unanswered_count: 5
+                  - life_event: null
+                    count: 17
+                    unanswered_count: 17
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/stale-procedures:
+    get:
+      tags: [Admin / Queries]
+      summary: List stale procedures
+      description: |
+        Returns procedures whose `last_verified_at` is older than 6 months or
+        null. Never-verified procedures come first, then the oldest verification.
+      operationId: adminListStaleProcedures
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Stale procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcedureListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── ADMIN / AUDIT ──────────────────────────────────────────────────────────
+
+  /admin/audit-log:
+    get:
+      tags: [Admin / Audit]
+      summary: List audit log entries (read-only)
+      description: |
+        Returns audit entries, newest first. Entries are written only by database
+        triggers; there is no endpoint to create, change or delete them, and RLS
+        allows admins to read only ([ADR 0004](decisions/0004-admin-writes-with-user-jwt.md)).
+      operationId: adminListAuditLog
+      security:
+        - BearerAuth: []
+        - SessionCookie: []
+      parameters:
+        - name: entity_type
+          in: query
+          description: Table name of the changed entity
+          schema:
+            type: string
+          example: procedures
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: changed_by
+          in: query
+          description: Admin user id
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# =============================================================================
+# COMPONENTS
+# =============================================================================
+
+components:
+
+  # ── SECURITY ───────────────────────────────────────────────────────────────
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Supabase Auth access token. Admin endpoints also require the claim
+        `app_metadata.role = 'admin'`; without it they return 403.
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: sb-<project-ref>-auth-token
+      description: |
+        Supabase Auth session cookie set by `@supabase/ssr` when the admin signs
+        in to the admin panel. The cookie name includes the Supabase project ref.
+        Same admin claim rule as `BearerAuth`.
+
+  # ── PARAMETERS ─────────────────────────────────────────────────────────────
+
+  parameters:
+    SlugPath:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+      example: selim-se
+
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    Limit:
+      name: limit
+      in: query
+      description: Number of results per page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+    Offset:
+      name: offset
+      in: query
+      description: Number of results to skip
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+
+    From:
+      name: from
+      in: query
+      description: Only records created at or after this time (inclusive)
+      schema:
+        type: string
+        format: date-time
+
+    To:
+      name: to
+      in: query
+      description: Only records created before this time (exclusive)
+      schema:
+        type: string
+        format: date-time
+
+    StatusFilter:
+      name: status
+      in: query
+      description: Filter by status
+      schema:
+        $ref: '#/components/schemas/ContentStatus'
+
+  # ── HEADERS ────────────────────────────────────────────────────────────────
+
+  headers:
+    RetryAfter:
+      description: Seconds until the client may send another request
+      schema:
+        type: integer
+        minimum: 1
+
+  # ── SCHEMAS ────────────────────────────────────────────────────────────────
+
+  schemas:
+
+    # ── Base ──────────────────────────────────────────────────────────────────
+
+    ContentStatus:
+      type: string
+      enum: [draft, published, archived]
+      description: Content status. Only `published` is visible to the public.
+
+    StatusChange:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+
+    Money:
+      type: string
+      pattern: '^\d{1,8}\.\d{2}$'
+      description: Amount in RSD as a decimal string with two decimals (database type NUMERIC(10,2)).
+      example: "1250.00"
+
+    CostType:
+      type: string
+      enum: [free, fixed, variable, unknown]
+      description: |
+        `free`: no cost. `fixed`: a known amount in `cost_amount`. `variable`:
+        depends on the case, explained in `cost_description`. `unknown`: not
+        known; the UI must not show it as free.
+
+    InstitutionKind:
+      type: string
+      enum: [government, bank, employer, other]
+      description: Kind of organization. The UI calls all of them organizations.
+
+    Pagination:
+      type: object
+      required: [total, limit, offset]
+      properties:
+        total:
+          type: integer
+          description: Total number of records
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Message to show to the user (Serbian, informal "ti")
+
+    ValidationError:
+      type: object
+      required: [error, message, details]
+      properties:
+        error:
+          type: string
+          example: validation_error
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    # ── Category ──────────────────────────────────────────────────────────────
+
+    Category:
+      type: object
+      required: [id, name, slug, sort_order]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Lična dokumenta
+        slug:
+          type: string
+          example: licna-dokumenta
+        icon:
+          type: string
+          nullable: true
+          description: Lucide icon name in kebab-case, rendered by the Osnova `Icon` component
+          example: id-card
+        sort_order:
+          type: integer
+
+    CategoryListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryWrite:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          maxLength: 100
+        icon:
+          type: string
+          maxLength: 100
+          nullable: true
+        sort_order:
+          type: integer
+          default: 0
+
+    # ── LifeEvent ─────────────────────────────────────────────────────────────
+
+    LifeEventSummary:
+      type: object
+      required: [id, title, slug, category, procedure_count, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Selim se
+        description:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          example: selim-se
+        icon:
+          type: string
+          nullable: true
+          description: Lucide icon name in kebab-case, rendered by the Osnova `Icon` component
+          example: house
+        estimated_duration:
+          type: string
+          nullable: true
+          description: Total time for the whole event, entered by the admin (ADR 0008)
+          example: "~2 nedelje"
+        category:
+          $ref: '#/components/schemas/Category'
+        procedure_count:
+          type: integer
+          description: Number of procedures in this event (public responses count only public procedures)
+        sort_order:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+
+    LifeEventDetail:
+      allOf:
+        - $ref: '#/components/schemas/LifeEventSummary'
+        - type: object
+          required: [procedures, dependencies]
+          properties:
+            procedures:
+              type: array
+              description: Procedures in their defined order
+              items:
+                $ref: '#/components/schemas/ProcedureInEvent'
+            dependencies:
+              type: array
+              description: Dependencies between procedures in this event
+              items:
+                $ref: '#/components/schemas/Dependency'
+
+    ProcedureInEvent:
+      type: object
+      description: A procedure in the context of a life event
+      required: [procedure_id, title, slug, sort_order, institutions, depends_on]
+      properties:
+        procedure_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        slug:
+          type: string
+        sort_order:
+          type: integer
+        can_online:
+          type: boolean
+        can_in_person:
+          type: boolean
+        can_by_mail:
+          type: boolean
+        cost_type:
+          $ref: '#/components/schemas/CostType'
+        cost_amount:
+          type: string
+          pattern: '^\d{1,8}\.\d{2}$'
+          nullable: true
+          description: Decimal string in RSD (see `Money`); set only when `cost_type` is `fixed`
+        processing_time:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+        is_stale:
+          type: boolean
+          description: True when `last_verified_at` is older than 6 months or null
+        institutions:
+          type: array
+          description: Published institutions linked to this procedure
+          items:
+            $ref: '#/components/schemas/InstitutionRef'
+        depends_on:
+          type: array
+          description: IDs of procedures in this event that must be done first
+          items:
+            type: string
+            format: uuid
+
+    LifeEventListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifeEventSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    LifeEventWrite:
+      type: object
+      required: [title, slug, category_id, status]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          maxLength: 200
+        category_id:
+          type: string
+          format: uuid
+        icon:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Lucide icon name in kebab-case
+        estimated_duration:
+          type: string
+          maxLength: 100
+          nullable: true
+          example: "~2 nedelje"
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+        sort_order:
+          type: integer
+          default: 0
+
+    LifeEventProceduresWrite:
+      type: object
+      required: [procedures]
+      properties:
+        procedures:
+          type: array
+          items:
+            type: object
+            required: [procedure_id, sort_order]
+            properties:
+              procedure_id:
+                type: string
+                format: uuid
+              sort_order:
+                type: integer
+                minimum: 0
+
+    # ── Procedure ─────────────────────────────────────────────────────────────
+
+    ProcedureRef:
+      type: object
+      required: [id, slug, title]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: prijava-prebivalista
+        title:
+          type: string
+          example: Prijava prebivališta
+
+    ProcedureSummary:
+      type: object
+      required: [id, title, slug, can_online, can_in_person, can_by_mail, cost_type, status, is_stale]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Prijava prebivališta
+        slug:
+          type: string
+          example: prijava-prebivalista
+        description:
+          type: string
+          nullable: true
+        can_online:
+          type: boolean
+          description: The procedure can be done online
+        can_in_person:
+          type: boolean
+          description: The procedure can be done in person
+        can_by_mail:
+          type: boolean
+          description: The procedure can be done by mail
+        cost_type:
+          $ref: '#/components/schemas/CostType'
+        cost_amount:
+          type: string
+          pattern: '^\d{1,8}\.\d{2}$'
+          nullable: true
+          description: Set only when `cost_type` is `fixed`
+        processing_time:
+          type: string
+          nullable: true
+          example: 7–15 radnih dana
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+        is_stale:
+          type: boolean
+          description: True when `last_verified_at` is older than 6 months or null
+        last_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ProcedureDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProcedureSummary'
+        - type: object
+          required: [steps, documents, institutions, life_events]
+          properties:
+            cost_description:
+              type: string
+              nullable: true
+            official_link:
+              type: string
+              format: uri
+              nullable: true
+            form_link:
+              type: string
+              format: uri
+              nullable: true
+            steps:
+              type: array
+              description: Ordered by `sort_order`
+              items:
+                $ref: '#/components/schemas/Step'
+            documents:
+              type: array
+              description: Ordered by `sort_order`
+              items:
+                $ref: '#/components/schemas/Document'
+            institutions:
+              type: array
+              description: Linked institutions; public responses include only published ones
+              items:
+                $ref: '#/components/schemas/ProcedureInstitution'
+            life_events:
+              type: array
+              description: |
+                Life events this procedure belongs to. Public responses include
+                only published life events; admin responses include all.
+              items:
+                $ref: '#/components/schemas/LifeEventLink'
+
+    ProcedureInstitution:
+      allOf:
+        - $ref: '#/components/schemas/InstitutionSummary'
+        - type: object
+          properties:
+            note:
+              type: string
+              nullable: true
+              description: Note on this procedure-institution link (`procedure_institutions.note`)
+              example: Za online koristi eUprava portal, za lično idi u policijsku stanicu.
+
+    LifeEventLink:
+      type: object
+      required: [slug, title]
+      properties:
+        slug:
+          type: string
+          example: selim-se
+        title:
+          type: string
+          example: Selim se
+
+    ProcedureListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ProcedureWrite:
+      type: object
+      required: [title, slug, status, cost_type, steps, institution_ids]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          maxLength: 200
+        can_online:
+          type: boolean
+          default: false
+        can_in_person:
+          type: boolean
+          default: true
+        can_by_mail:
+          type: boolean
+          default: false
+        cost_type:
+          $ref: '#/components/schemas/CostType'
+        cost_amount:
+          type: string
+          pattern: '^\d{1,8}\.\d{2}$'
+          nullable: true
+          description: Required when `cost_type` is `fixed`; must be null otherwise
+        cost_description:
+          type: string
+          nullable: true
+        processing_time:
+          type: string
+          maxLength: 200
+          nullable: true
+        official_link:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        form_link:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+        last_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        steps:
+          type: array
+          minItems: 1
+          description: At least one step (PR-01). Replaces the full list.
+          items:
+            $ref: '#/components/schemas/StepWrite'
+        documents:
+          type: array
+          description: Documents of this procedure (ADR 0005). Replaces the full list.
+          items:
+            $ref: '#/components/schemas/DocumentWrite'
+        institution_ids:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: At least one institution (PR-02). Replaces the full list.
+          items:
+            type: string
+            format: uuid
+        institution_notes:
+          type: object
+          description: |
+            Optional note per institution link, keyed by institution id. Keys
+            must appear in `institution_ids` (422 otherwise).
+          additionalProperties:
+            type: string
+            maxLength: 1000
+
+    ProcedurePatch:
+      type: object
+      minProperties: 1
+      properties:
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+        last_verified_at:
+          type: string
+          format: date-time
+
+    # ── Step ──────────────────────────────────────────────────────────────────
+
+    Step:
+      type: object
+      required: [id, sort_order, title, description]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sort_order:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        link_url:
+          type: string
+          format: uri
+          nullable: true
+        link_label:
+          type: string
+          nullable: true
+
+    StepWrite:
+      type: object
+      required: [title, description, sort_order]
+      properties:
+        title:
+          type: string
+          maxLength: 300
+        description:
+          type: string
+        sort_order:
+          type: integer
+        link_url:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        link_label:
+          type: string
+          maxLength: 200
+          nullable: true
+
+    # ── Document ──────────────────────────────────────────────────────────────
+
+    Document:
+      type: object
+      description: A document the citizen prepares for this procedure. Owned by one procedure (ADR 0005).
+      required: [id, name, is_required, sort_order]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_required:
+          type: boolean
+        note:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+
+    DocumentWrite:
+      type: object
+      required: [name, is_required, sort_order]
+      properties:
+        name:
+          type: string
+          maxLength: 300
+        description:
+          type: string
+          nullable: true
+        is_required:
+          type: boolean
+        note:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+
+    # ── Institution ───────────────────────────────────────────────────────────
+
+    InstitutionRef:
+      type: object
+      required: [name, slug, kind]
+      properties:
+        name:
+          type: string
+          example: Ministarstvo unutrašnjih poslova (MUP)
+        slug:
+          type: string
+          example: mup
+        kind:
+          $ref: '#/components/schemas/InstitutionKind'
+
+    InstitutionSummary:
+      type: object
+      required: [id, name, slug, kind, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ministarstvo unutrašnjih poslova (MUP)
+        slug:
+          type: string
+          example: mup
+        kind:
+          $ref: '#/components/schemas/InstitutionKind'
+        address:
+          type: string
+          nullable: true
+          description: Address of the head office. Branch offices are not modelled in v1 (ADR 0008).
+          example: Kneza Miloša 101, Beograd
+        website:
+          type: string
+          format: uri
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        working_hours:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+
+    Institution:
+      allOf:
+        - $ref: '#/components/schemas/InstitutionSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+
+    InstitutionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Institution'
+        - type: object
+          required: [procedures]
+          properties:
+            procedures:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProcedureSummary'
+
+    InstitutionListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstitutionSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    InstitutionWrite:
+      type: object
+      required: [name, slug, kind, status]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 200
+        kind:
+          $ref: '#/components/schemas/InstitutionKind'
+        description:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        website:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        phone:
+          type: string
+          maxLength: 50
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          nullable: true
+        working_hours:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContentStatus'
+
+    # ── Dependency ────────────────────────────────────────────────────────────
+
+    Dependency:
+      type: object
+      description: "`procedure_id` cannot start until `depends_on_id` is done, within `life_event_id`."
+      required: [life_event_id, procedure_id, depends_on_id]
+      properties:
+        life_event_id:
+          type: string
+          format: uuid
+        procedure_id:
+          type: string
+          format: uuid
+        depends_on_id:
+          type: string
+          format: uuid
+
+    DependencyWrite:
+      type: object
+      required: [procedure_id, depends_on_id]
+      properties:
+        procedure_id:
+          type: string
+          format: uuid
+          description: The procedure that depends on the other one
+        depends_on_id:
+          type: string
+          format: uuid
+          description: The procedure that must be done first
+
+    DependencyListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dependency'
+
+    # ── Synonym ───────────────────────────────────────────────────────────────
+
+    Synonym:
+      type: object
+      required: [id, term, maps_to, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        term:
+          type: string
+          description: Informal term people type
+          example: karton
+        maps_to:
+          type: string
+          description: Standard term it maps to
+          example: izvod iz matične knjige
+        created_at:
+          type: string
+          format: date-time
+
+    SynonymWrite:
+      type: object
+      required: [term, maps_to]
+      properties:
+        term:
+          type: string
+          minLength: 2
+          maxLength: 200
+        maps_to:
+          type: string
+          minLength: 2
+          maxLength: 200
+
+    SynonymListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Synonym'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ── Search ────────────────────────────────────────────────────────────────
+
+    SearchResponse:
+      type: object
+      required: [query, original_query, life_events, procedures, institutions, total_count]
+      properties:
+        query:
+          type: string
+          description: The term that was searched (a mapped synonym when one applied)
+        original_query:
+          type: string
+          description: What the user typed, before synonym mapping
+        life_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/LifeEventSummary'
+        procedures:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureSummary'
+        institutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstitutionSummary'
+        total_count:
+          type: integer
+          description: Total number of results
+
+    # ── AI ────────────────────────────────────────────────────────────────────
+
+    AiChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1000
+
+    AiChatRequest:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          minItems: 1
+          maxItems: 20
+          description: |
+            The whole conversation, oldest first, held by the client. Roles
+            alternate and the last message has `role: user` (422 otherwise). The
+            last user message must be at least 3 characters.
+          items:
+            $ref: '#/components/schemas/AiChatMessage'
+
+    AiRedactionKind:
+      type: string
+      enum: [jmbg, phone, email, document_number]
+
+    AiChatResponse:
+      type: object
+      required: [answer, was_answered, matched_life_event, procedures, redaction]
+      properties:
+        answer:
+          type: string
+          description: The assistant's answer, in Serbian (Latin script, informal "ti")
+        was_answered:
+          type: boolean
+          description: Whether the answer came from the content, taken from structured output (ADR 0006)
+        matched_life_event:
+          type: object
+          nullable: true
+          required: [id, slug, title]
+          properties:
+            id:
+              type: string
+              format: uuid
+            slug:
+              type: string
+            title:
+              type: string
+          description: The life event the model picked, if any; link with `/dogadjaj/{slug}`
+        procedures:
+          type: array
+          description: |
+            Published procedures the model picked and the answer is based on, in
+            the order the model ranked them; link with `/procedura/{slug}`. Empty
+            when `was_answered` is false. IDs the model returns that are not
+            public are dropped by the server.
+          items:
+            $ref: '#/components/schemas/ProcedureRef'
+        redaction:
+          $ref: '#/components/schemas/AiRedaction'
+
+    AiRedaction:
+      type: object
+      description: |
+        Whether personal data was masked in the user's messages before they were
+        sent to the model and stored (ADR 0007). When `applied` is true, the UI
+        tells the user, for example "Uklonili smo lične podatke iz tvoje poruke
+        pre slanja." Redaction is best effort.
+      required: [applied, kinds]
+      properties:
+        applied:
+          type: boolean
+        kinds:
+          type: array
+          description: Kinds of data that were masked; values only, never the masked text
+          items:
+            $ref: '#/components/schemas/AiRedactionKind'
+
+    # ── AI Queries ────────────────────────────────────────────────────────────
+
+    AiQuery:
+      type: object
+      required: [id, query_text, was_answered, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        query_text:
+          type: string
+          description: The last user message, after redaction (ADR 0007). Deleted after 90 days.
+        was_answered:
+          type: boolean
+        matched_event_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AiQueryStatsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required: [life_event, count, unanswered_count]
+            properties:
+              life_event:
+                type: object
+                nullable: true
+                description: The matched life event, or null for queries with no match
+                required: [id, slug, title]
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  slug:
+                    type: string
+                  title:
+                    type: string
+              count:
+                type: integer
+                minimum: 0
+              unanswered_count:
+                type: integer
+                minimum: 0
+                description: Queries in this group with `was_answered = false`
+
+    AiQueryListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiQuery'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ── Audit log ─────────────────────────────────────────────────────────────
+
+    AuditAction:
+      type: string
+      enum: [create, update, archive, delete]
+      description: "`delete` is used only for steps, documents, link rows and synonyms; content entities are archived."
+
+    AuditLogEntry:
+      type: object
+      required: [id, entity_type, entity_id, action, changed_by, changed_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          description: Table name of the changed entity
+          example: procedures
+        entity_id:
+          type: string
+          description: |
+            UUID of the changed row. For link rows without their own id
+            (life event procedures, dependencies) the trigger records the
+            life event id.
+          format: uuid
+        action:
+          $ref: '#/components/schemas/AuditAction'
+        changed_by:
+          type: string
+          format: uuid
+          description: Admin user id (`auth.uid()` at the time of the change)
+        changed_at:
+          type: string
+          format: date-time
+        diff:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: 'Old and new values of changed fields: `{"field": {"old": ..., "new": ...}}`'
+
+    AuditLogListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogEntry'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+  # ── RESPONSES ─────────────────────────────────────────────────────────────
+
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: bad_request
+            message: "Unesi bar 2 karaktera za pretragu."
+
+    Unauthorized:
+      description: Missing, invalid or expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: unauthorized
+            message: "Prijavi se da nastaviš."
+
+    Forbidden:
+      description: Authenticated, but the token lacks `app_metadata.role = 'admin'`
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: forbidden
+            message: "Nemaš pristup ovoj akciji."
+
+    NotFound:
+      description: Resource not found (or not public)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: not_found
+            message: "Nismo pronašli ono što tražiš."
+
+    Conflict:
+      description: A unique value (slug, name, term) is already taken
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: conflict
+            message: "Ovaj slug je već zauzet."
+
+    ValidationError:
+      description: Request is well-formed but breaks a business rule
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+          example:
+            error: validation_error
+            message: "Proveri označena polja."
+            details:
+              - field: steps
+                message: "Procedura mora imati najmanje jedan korak."
+              - field: institution_ids
+                message: "Poveži bar jednu organizaciju."
+
+    TooManyRequests:
+      description: |
+        AI rate limit reached: 10 requests per hashed IP per clock hour.
+        `Retry-After` gives the seconds until the current hourly window ends (fixed windows in `ai_rate_limits`).
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                required: [retry_after_seconds]
+                properties:
+                  retry_after_seconds:
+                    type: integer
+                    minimum: 1
+          example:
+            error: rate_limited
+            message: "Iskoristio si 10 pitanja za ovaj sat. Pokušaj ponovo za 25 minuta."
+            retry_after_seconds: 1500
+
+    AiUnavailable:
+      description: The assistant is temporarily unavailable (monthly spending limit reached or Anthropic API unreachable)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: ai_unavailable
+            message: "Asistent trenutno nije dostupan. Pokušaj ponovo kasnije ili pronađi svoj životni događaj na početnoj strani."
+
+    InternalError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: internal_error
+            message: "Došlo je do greške. Pokušaj ponovo."

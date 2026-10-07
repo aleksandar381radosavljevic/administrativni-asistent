@@ -1,0 +1,8 @@
+docs/
+supabase/
+package-lock.json
+.next/
+AGENTS.md
+CLAUDE.md
+.ai-instructions.json
+.claude/
