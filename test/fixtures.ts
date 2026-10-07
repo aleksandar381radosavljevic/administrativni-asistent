@@ -1,6 +1,9 @@
 // Contract-shaped sample data for unit tests, based on the test seed.
 import type {
   CategoryListResponse,
+  InstitutionDetail,
+  InstitutionListResponse,
+  ProcedureListResponse,
   LifeEventDetail,
   LifeEventListResponse,
   ProcedureDetail,
@@ -107,6 +110,22 @@ const institution = {
   email: null,
   working_hours: null,
   status: "published" as const,
+};
+
+export const procedureList: ProcedureListResponse = {
+  data: [procedureSummary],
+  pagination: { total: 1, limit: 20, offset: 0 },
+};
+
+export const institutionList: InstitutionListResponse = {
+  data: [institution],
+  pagination: { total: 1, limit: 20, offset: 0 },
+};
+
+export const institutionDetail: InstitutionDetail = {
+  ...institution,
+  description: "Ministarstvo unutrašnjih poslova",
+  procedures: [procedureSummary],
 };
 
 export const procedureDetail: ProcedureDetail = {

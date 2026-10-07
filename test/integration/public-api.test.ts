@@ -1,15 +1,21 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import * as categoriesRoute from "@/app/api/v1/categories/route";
+import * as institutionRoute from "@/app/api/v1/institutions/[slug]/route";
+import * as institutionsRoute from "@/app/api/v1/institutions/route";
 import * as lifeEventRoute from "@/app/api/v1/life-events/[slug]/route";
 import * as lifeEventsRoute from "@/app/api/v1/life-events/route";
 import * as procedureRoute from "@/app/api/v1/procedures/[slug]/route";
+import * as proceduresRoute from "@/app/api/v1/procedures/route";
 import * as searchRoute from "@/app/api/v1/search/route";
 import {
   categoryListResponseSchema,
+  institutionDetailSchema,
+  institutionListResponseSchema,
   lifeEventDetailSchema,
   lifeEventListResponseSchema,
   procedureDetailSchema,
+  procedureListResponseSchema,
   searchResponseSchema,
 } from "@/lib/services/schemas";
 
@@ -80,5 +86,41 @@ describe("public API on the seeded database", () => {
     const body = searchResponseSchema.parse(await response.json());
     expect(body.query).toBe("pasoš");
     expect(body.procedures.map((p) => p.slug)).toContain("pasosh");
+  });
+
+  it("lists public procedures, also filtered by institution", async () => {
+    const all = procedureListResponseSchema.parse(
+      await (await proceduresRoute.GET(request("/procedures"))).json(),
+    );
+    expect(all.pagination.total).toBe(5);
+    const byMup = procedureListResponseSchema.parse(
+      await (
+        await proceduresRoute.GET(request("/procedures?institution_slug=mup"))
+      ).json(),
+    );
+    expect(byMup.pagination.total).toBe(5);
+    const unknown = procedureListResponseSchema.parse(
+      await (
+        await proceduresRoute.GET(request("/procedures?institution_slug=nema"))
+      ).json(),
+    );
+    expect(unknown).toEqual({
+      data: [],
+      pagination: { total: 0, limit: 20, offset: 0 },
+    });
+  });
+
+  it("lists institutions and returns one with its public procedures", async () => {
+    const list = institutionListResponseSchema.parse(
+      await (await institutionsRoute.GET(request("/institutions"))).json(),
+    );
+    expect(list.data.map((i) => i.slug)).toEqual(["mup"]);
+    const detail = institutionDetailSchema.parse(
+      await (
+        await institutionRoute.GET(request("/institutions/mup"), params("mup"))
+      ).json(),
+    );
+    expect(detail.procedures).toHaveLength(5);
+    expect(detail.procedures.map((p) => p.slug)).toContain("pasosh");
   });
 });

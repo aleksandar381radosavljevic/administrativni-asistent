@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-// Request and response schemas for the public read endpoints, mirroring the
-// components in docs/03-api-contract.yml (ADR 0013). Response types are
-// inferred from these schemas; schemas.test.ts checks them against 03.
-// Responses always carry every property, with null for missing values.
+// Response schemas for every endpoint and the query schemas of the public
+// endpoints, mirroring the components in docs/03-api-contract.yml (ADR 0013).
+// Response types are inferred from these schemas; schemas.test.ts checks them
+// against 03. Responses always carry every property, with null for missing
+// values. Admin request bodies and filters are in write-schemas.ts.
 
 // ---- Shared -------------------------------------------------------------------
 
@@ -24,7 +25,7 @@ export const institutionKindSchema = z.enum([
 ]);
 /** Money is a decimal string in RSD with two decimals, never a number (04 §4.1). */
 export const moneySchema = z.string().regex(/^\d{1,8}\.\d{2}$/);
-const timestampSchema = z.iso.datetime({ offset: true });
+export const timestampSchema = z.iso.datetime({ offset: true });
 
 export const paginationSchema = z.object({
   total: z.int().min(0),
@@ -43,7 +44,7 @@ export const validationErrorSchema = errorSchema.extend({
 
 // ---- Requests -----------------------------------------------------------------
 
-const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
+export const limitSchema = z.coerce.number().int().min(1).max(100).default(20);
 const offsetSchema = z.coerce.number().int().min(0).default(0);
 
 export const paginationQuerySchema = z.object({
@@ -55,12 +56,18 @@ export const lifeEventListQuerySchema = paginationQuerySchema.extend({
   category_slug: z.string().min(1).max(200).optional(),
 });
 
+export const procedureListQuerySchema = paginationQuerySchema.extend({
+  institution_slug: z.string().min(1).max(200).optional(),
+});
+
 export const searchQuerySchema = z.object({
   q: z.string().trim().min(2).max(200),
   limit: limitSchema,
 });
 
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type LifeEventListQuery = z.infer<typeof lifeEventListQuerySchema>;
+export type ProcedureListQuery = z.infer<typeof procedureListQuerySchema>;
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 
 // ---- Categories ---------------------------------------------------------------
@@ -98,6 +105,15 @@ export const institutionSummarySchema = z.object({
   status: contentStatusSchema,
 });
 
+export const institutionSchema = institutionSummarySchema.extend({
+  description: z.string().nullable(),
+});
+
+export const institutionListResponseSchema = z.object({
+  data: z.array(institutionSummarySchema),
+  pagination: paginationSchema,
+});
+
 // ---- Procedures ---------------------------------------------------------------
 
 export const procedureSummarySchema = z.object({
@@ -115,6 +131,20 @@ export const procedureSummarySchema = z.object({
   is_stale: z.boolean(),
   last_verified_at: timestampSchema.nullable(),
 });
+
+export const procedureListResponseSchema = z.object({
+  data: z.array(procedureSummarySchema),
+  pagination: paginationSchema,
+});
+
+/** `{ id, slug, title }`: 03 ProcedureRef and the life event in AI stats. */
+export const entityRefSchema = z.object({
+  id: idSchema,
+  slug: z.string(),
+  title: z.string(),
+});
+
+export const procedureRefSchema = entityRefSchema;
 
 export const stepSchema = z.object({
   id: idSchema,
@@ -151,6 +181,10 @@ export const procedureDetailSchema = procedureSummarySchema.extend({
   documents: z.array(documentSchema),
   institutions: z.array(procedureInstitutionSchema),
   life_events: z.array(lifeEventLinkSchema),
+});
+
+export const institutionDetailSchema = institutionSchema.extend({
+  procedures: z.array(procedureSummarySchema),
 });
 
 // ---- Life events --------------------------------------------------------------
@@ -201,6 +235,10 @@ export const lifeEventListResponseSchema = z.object({
   pagination: paginationSchema,
 });
 
+export const dependencyListResponseSchema = z.object({
+  data: z.array(dependencySchema),
+});
+
 // ---- Search -------------------------------------------------------------------
 
 export const searchResponseSchema = z.object({
@@ -212,15 +250,92 @@ export const searchResponseSchema = z.object({
   total_count: z.int().min(0),
 });
 
+// ---- Admin: synonyms, AI queries, audit log ------------------------------------
+
+export const synonymSchema = z.object({
+  id: idSchema,
+  term: z.string(),
+  maps_to: z.string(),
+  created_at: timestampSchema,
+});
+
+export const synonymListResponseSchema = z.object({
+  data: z.array(synonymSchema),
+  pagination: paginationSchema,
+});
+
+export const aiQuerySchema = z.object({
+  id: idSchema,
+  query_text: z.string(),
+  was_answered: z.boolean(),
+  matched_event_id: idSchema.nullable(),
+  created_at: timestampSchema,
+});
+
+export const aiQueryListResponseSchema = z.object({
+  data: z.array(aiQuerySchema),
+  pagination: paginationSchema,
+});
+
+export const aiQueryStatsResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      life_event: entityRefSchema.nullable(),
+      count: z.int().min(0),
+      unanswered_count: z.int().min(0),
+    }),
+  ),
+});
+
+export const auditActionSchema = z.enum([
+  "create",
+  "update",
+  "archive",
+  "delete",
+]);
+
+export const auditLogEntrySchema = z.object({
+  id: idSchema,
+  entity_type: z.string(),
+  entity_id: idSchema,
+  action: auditActionSchema,
+  // Null only for changes made by the database owner (migrations, seeds);
+  // see the audit_log.changed_by comment in the schema.
+  changed_by: idSchema.nullable(),
+  changed_at: timestampSchema,
+  diff: z.record(z.string(), z.unknown()).nullable(),
+});
+
+export const auditLogListResponseSchema = z.object({
+  data: z.array(auditLogEntrySchema),
+  pagination: paginationSchema,
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type CategoryListResponse = z.infer<typeof categoryListResponseSchema>;
 export type InstitutionRef = z.infer<typeof institutionRefSchema>;
 export type InstitutionSummary = z.infer<typeof institutionSummarySchema>;
+export type Institution = z.infer<typeof institutionSchema>;
+export type InstitutionDetail = z.infer<typeof institutionDetailSchema>;
+export type InstitutionListResponse = z.infer<
+  typeof institutionListResponseSchema
+>;
 export type ProcedureSummary = z.infer<typeof procedureSummarySchema>;
 export type ProcedureDetail = z.infer<typeof procedureDetailSchema>;
+export type ProcedureListResponse = z.infer<typeof procedureListResponseSchema>;
 export type ProcedureInEvent = z.infer<typeof procedureInEventSchema>;
 export type Dependency = z.infer<typeof dependencySchema>;
+export type DependencyListResponse = z.infer<
+  typeof dependencyListResponseSchema
+>;
 export type LifeEventSummary = z.infer<typeof lifeEventSummarySchema>;
 export type LifeEventDetail = z.infer<typeof lifeEventDetailSchema>;
 export type LifeEventListResponse = z.infer<typeof lifeEventListResponseSchema>;
 export type SearchResponse = z.infer<typeof searchResponseSchema>;
+export type Synonym = z.infer<typeof synonymSchema>;
+export type SynonymListResponse = z.infer<typeof synonymListResponseSchema>;
+export type AiQuery = z.infer<typeof aiQuerySchema>;
+export type AiQueryListResponse = z.infer<typeof aiQueryListResponseSchema>;
+export type AiQueryStatsResponse = z.infer<typeof aiQueryStatsResponseSchema>;
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+export type AuditLogListResponse = z.infer<typeof auditLogListResponseSchema>;
