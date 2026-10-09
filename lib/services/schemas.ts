@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { labels } from "@/lib/i18n/labels";
 
 // Response schemas for every endpoint and the query schemas of the public
 // endpoints, mirroring the components in docs/03-api-contract.yml (ADR 0013).
@@ -250,6 +251,81 @@ export const searchResponseSchema = z.object({
   total_count: z.int().min(0),
 });
 
+// ---- AI chat ------------------------------------------------------------------
+
+export const AI_CHAT_MAX_MESSAGES = 20;
+export const AI_CHAT_MAX_MESSAGE_LENGTH = 1000;
+export const AI_CHAT_MIN_QUESTION_LENGTH = 3;
+
+export const aiChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().trim().min(1).max(AI_CHAT_MAX_MESSAGE_LENGTH),
+});
+
+/**
+ * 03 AiChatRequest. The conversation rules are checked here, at the boundary,
+ * so the AI layer can rely on them: roles alternate, the last message is the
+ * user's and holds a real question.
+ */
+export const aiChatRequestSchema = z.object({
+  messages: z
+    .array(aiChatMessageSchema)
+    .min(1)
+    .max(AI_CHAT_MAX_MESSAGES)
+    .superRefine((messages, ctx) => {
+      messages.forEach((message, index) => {
+        if (index > 0 && messages[index - 1].role === message.role) {
+          ctx.addIssue({
+            code: "custom",
+            path: [index, "role"],
+            message: labels.validation.chatRolesAlternate,
+          });
+        }
+      });
+      const lastIndex = messages.length - 1;
+      const last = messages.at(-1);
+      // An empty list is already reported by min(1).
+      if (last === undefined) return;
+      if (last.role !== "user") {
+        ctx.addIssue({
+          code: "custom",
+          path: [lastIndex, "role"],
+          message: labels.validation.chatLastFromUser,
+        });
+      } else if (last.content.length < AI_CHAT_MIN_QUESTION_LENGTH) {
+        ctx.addIssue({
+          code: "custom",
+          path: [lastIndex, "content"],
+          message: labels.validation.chatQuestionTooShort,
+        });
+      }
+    }),
+});
+
+export const aiRedactionKindSchema = z.enum([
+  "jmbg",
+  "phone",
+  "email",
+  "document_number",
+]);
+
+export const aiRedactionSchema = z.object({
+  applied: z.boolean(),
+  kinds: z.array(aiRedactionKindSchema),
+});
+
+export const aiChatResponseSchema = z.object({
+  answer: z.string(),
+  was_answered: z.boolean(),
+  matched_life_event: entityRefSchema.nullable(),
+  procedures: z.array(procedureRefSchema),
+  redaction: aiRedactionSchema,
+});
+
+export const rateLimitErrorSchema = errorSchema.extend({
+  retry_after_seconds: z.int().min(1),
+});
+
 // ---- Admin: synonyms, AI queries, audit log ------------------------------------
 
 export const synonymSchema = z.object({
@@ -337,5 +413,11 @@ export type SynonymListResponse = z.infer<typeof synonymListResponseSchema>;
 export type AiQuery = z.infer<typeof aiQuerySchema>;
 export type AiQueryListResponse = z.infer<typeof aiQueryListResponseSchema>;
 export type AiQueryStatsResponse = z.infer<typeof aiQueryStatsResponseSchema>;
+export type AiChatMessage = z.infer<typeof aiChatMessageSchema>;
+export type AiChatRequest = z.infer<typeof aiChatRequestSchema>;
+export type AiRedactionKind = z.infer<typeof aiRedactionKindSchema>;
+export type AiRedaction = z.infer<typeof aiRedactionSchema>;
+export type AiChatResponse = z.infer<typeof aiChatResponseSchema>;
+export type ProcedureRef = z.infer<typeof procedureRefSchema>;
 export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
 export type AuditLogListResponse = z.infer<typeof auditLogListResponseSchema>;

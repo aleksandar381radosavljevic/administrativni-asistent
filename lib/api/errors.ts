@@ -50,6 +50,11 @@ export class ApiError extends Error {
     return new ApiError(422, "validation_error", messages.validation, details);
   }
 
+  /** 503: the Anthropic API failed or the spending limit is reached (04 §7.3). */
+  static aiUnavailable() {
+    return new ApiError(503, "ai_unavailable", messages.aiUnavailable);
+  }
+
   static internal() {
     return new ApiError(500, "internal_error", messages.internal);
   }
