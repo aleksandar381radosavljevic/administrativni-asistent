@@ -41,7 +41,9 @@ jobs:
     # is the follow-up for integration and Playwright tests.
     services:
       postgres:
-        image: postgres:16
+        # The official image through the ECR Public mirror: anonymous Docker Hub
+        # pulls from shared runners hit its rate limit and time out.
+        image: public.ecr.aws/docker/library/postgres:16
         env:
           POSTGRES_PASSWORD: postgres
         ports:

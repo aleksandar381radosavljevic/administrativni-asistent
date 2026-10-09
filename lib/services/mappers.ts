@@ -1,4 +1,4 @@
-// Select lists and row-to-contract mapping for the public read services.
+// Select lists and row-to-contract mapping for the read services.
 // Pure functions, so they are unit-tested without a database.
 
 import { isStale } from "@/lib/domain/is-stale";
@@ -6,6 +6,7 @@ import type { Database } from "@/types/database";
 import type {
   Category,
   Dependency,
+  InstitutionDetail,
   InstitutionRef,
   InstitutionSummary,
   LifeEventDetail,
@@ -24,26 +25,42 @@ export const CATEGORY_SELECT = "id, name, slug, icon, sort_order";
 export const INSTITUTION_SUMMARY_SELECT =
   "id, name, slug, kind, address, website, phone, email, working_hours, status";
 
+export const INSTITUTION_SELECT = `${INSTITUTION_SUMMARY_SELECT}, description`;
+
 export const PROCEDURE_SUMMARY_SELECT =
   "id, title, slug, description, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at";
 
+const LIFE_EVENT_COLUMNS = `id, title, description, slug, icon, estimated_duration, sort_order, status,
+  category:categories!inner(${CATEGORY_SELECT})`;
+
+const EVENT_PROCEDURE_COLUMNS = `sort_order,
+    procedure:procedures!inner(id, title, slug, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at,
+      procedure_institutions(institution:institutions!inner(name, slug, kind)))`;
+
 // `!inner` on the link rows: an event whose procedures are all hidden is
 // itself hidden (open question 1). RLS already hides non-public procedures.
-export const LIFE_EVENT_SUMMARY_SELECT = `id, title, description, slug, icon, estimated_duration, sort_order, status,
-  category:categories!inner(${CATEGORY_SELECT}),
+export const LIFE_EVENT_SUMMARY_SELECT = `${LIFE_EVENT_COLUMNS},
   life_event_procedures!inner(procedure_id)`;
 
-export const LIFE_EVENT_DETAIL_SELECT = `id, title, description, slug, icon, estimated_duration, sort_order, status,
-  category:categories!inner(${CATEGORY_SELECT}),
-  life_event_procedures!inner(sort_order,
-    procedure:procedures!inner(id, title, slug, can_online, can_in_person, can_by_mail, cost_type, cost_amount::text, processing_time, status, last_verified_at,
-      procedure_institutions(institution:institutions!inner(name, slug, kind))))`;
+export const LIFE_EVENT_DETAIL_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures!inner(${EVENT_PROCEDURE_COLUMNS})`;
+
+// Admin reads (user JWT, RLS admin policies) see every status, and a new
+// draft event has no procedures yet, so the link rows are not `!inner`.
+export const ADMIN_LIFE_EVENT_SUMMARY_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures(procedure_id)`;
+
+export const ADMIN_LIFE_EVENT_DETAIL_SELECT = `${LIFE_EVENT_COLUMNS},
+  life_event_procedures(${EVENT_PROCEDURE_COLUMNS})`;
 
 export const PROCEDURE_DETAIL_SELECT = `${PROCEDURE_SUMMARY_SELECT}, cost_description, official_link, form_link,
   steps(id, sort_order, title, description, link_url, link_label),
   documents(id, name, description, is_required, note, sort_order),
   procedure_institutions(note, institution:institutions!inner(${INSTITUTION_SUMMARY_SELECT})),
   life_event_procedures(life_event:life_events!inner(slug, title, sort_order))`;
+
+export const INSTITUTION_DETAIL_SELECT = `${INSTITUTION_SELECT},
+  procedure_institutions(procedure:procedures!inner(${PROCEDURE_SUMMARY_SELECT}))`;
 
 // ---- Row shapes returned by the selects above ---------------------------------
 
@@ -100,6 +117,13 @@ export interface ProcedureDetailRow extends ProcedureSummaryRow {
   life_event_procedures: {
     life_event: { slug: string; title: string; sort_order: number };
   }[];
+}
+
+export interface InstitutionDetailRow extends Omit<
+  InstitutionDetail,
+  "procedures"
+> {
+  procedure_institutions: { procedure: ProcedureSummaryRow }[];
 }
 
 const bySortOrder = <T extends { sort_order: number }>(items: readonly T[]) =>
@@ -221,5 +245,18 @@ export function toProcedureDetail(
     life_events: bySortOrder(
       row.life_event_procedures.map((link) => link.life_event),
     ).map(({ slug, title }) => ({ slug, title })),
+  };
+}
+
+/** Institution with its procedures, alphabetically (RLS decides which are visible). */
+export function toInstitutionDetail(
+  { procedure_institutions, ...institution }: InstitutionDetailRow,
+  now: Date,
+): InstitutionDetail {
+  return {
+    ...institution,
+    procedures: procedure_institutions
+      .map(({ procedure }) => toProcedureSummary(procedure, now))
+      .sort((a, b) => a.title.localeCompare(b.title, "sr")),
   };
 }

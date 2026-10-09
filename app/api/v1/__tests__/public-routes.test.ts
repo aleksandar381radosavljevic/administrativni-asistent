@@ -4,16 +4,22 @@ import { ApiError } from "@/lib/api/errors";
 import {
   categoryListResponseSchema,
   errorSchema,
+  institutionDetailSchema,
+  institutionListResponseSchema,
   lifeEventDetailSchema,
   lifeEventListResponseSchema,
   procedureDetailSchema,
+  procedureListResponseSchema,
   searchResponseSchema,
 } from "@/lib/services/schemas";
 import {
   categoryList,
+  institutionDetail,
+  institutionList,
   lifeEventDetail,
   lifeEventList,
   procedureDetail,
+  procedureList,
   searchResult,
 } from "@/test/fixtures";
 
@@ -22,18 +28,31 @@ vi.mock("@/lib/services/life-events", () => ({
   listLifeEvents: vi.fn(),
   getLifeEventBySlug: vi.fn(),
 }));
-vi.mock("@/lib/services/procedures", () => ({ getProcedureBySlug: vi.fn() }));
+vi.mock("@/lib/services/procedures", () => ({
+  listProcedures: vi.fn(),
+  getProcedureBySlug: vi.fn(),
+}));
+vi.mock("@/lib/services/institutions", () => ({
+  listInstitutions: vi.fn(),
+  getInstitutionBySlug: vi.fn(),
+}));
 vi.mock("@/lib/services/search", () => ({ search: vi.fn() }));
 
 const { listCategories } = await import("@/lib/services/categories");
 const { listLifeEvents, getLifeEventBySlug } =
   await import("@/lib/services/life-events");
-const { getProcedureBySlug } = await import("@/lib/services/procedures");
+const { listProcedures, getProcedureBySlug } =
+  await import("@/lib/services/procedures");
+const { listInstitutions, getInstitutionBySlug } =
+  await import("@/lib/services/institutions");
 const { search } = await import("@/lib/services/search");
 const categoriesRoute = await import("../categories/route");
 const lifeEventsRoute = await import("../life-events/route");
 const lifeEventRoute = await import("../life-events/[slug]/route");
+const proceduresRoute = await import("../procedures/route");
 const procedureRoute = await import("../procedures/[slug]/route");
+const institutionsRoute = await import("../institutions/route");
+const institutionRoute = await import("../institutions/[slug]/route");
 const searchRoute = await import("../search/route");
 
 const request = (path: string) =>
@@ -129,6 +148,83 @@ describe("GET /life-events/{slug}", () => {
     );
     expect(response.status).toBe(404);
     expect(getLifeEventBySlug).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /procedures", () => {
+  it("passes the institution filter and pagination to the service", async () => {
+    vi.mocked(listProcedures).mockResolvedValue(procedureList);
+    const response = await proceduresRoute.GET(
+      request("/procedures?institution_slug=mup&offset=20"),
+    );
+    expect(response.status).toBe(200);
+    expect(listProcedures).toHaveBeenCalledWith({
+      institution_slug: "mup",
+      limit: 20,
+      offset: 20,
+    });
+    expect(procedureListResponseSchema.parse(await response.json())).toEqual(
+      procedureList,
+    );
+  });
+
+  it("rejects a negative offset with 400", async () => {
+    const response = await proceduresRoute.GET(
+      request("/procedures?offset=-1"),
+    );
+    expect(response.status).toBe(400);
+    expect(listProcedures).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /institutions", () => {
+  it("returns published institutions with pagination", async () => {
+    vi.mocked(listInstitutions).mockResolvedValue(institutionList);
+    const response = await institutionsRoute.GET(request("/institutions"));
+    expect(response.status).toBe(200);
+    expect(listInstitutions).toHaveBeenCalledWith({ limit: 20, offset: 0 });
+    expect(institutionListResponseSchema.parse(await response.json())).toEqual(
+      institutionList,
+    );
+  });
+
+  it("rejects a non-numeric limit with 400", async () => {
+    const response = await institutionsRoute.GET(
+      request("/institutions?limit=sve"),
+    );
+    expect(response.status).toBe(400);
+  });
+});
+
+describe("GET /institutions/{slug}", () => {
+  it("returns the institution with its procedures", async () => {
+    vi.mocked(getInstitutionBySlug).mockResolvedValue(institutionDetail);
+    const response = await institutionRoute.GET(
+      request("/institutions/mup"),
+      params({ slug: "mup" }),
+    );
+    expect(response.status).toBe(200);
+    expect(institutionDetailSchema.parse(await response.json())).toEqual(
+      institutionDetail,
+    );
+  });
+
+  it("returns 404 for an unknown or unpublished institution", async () => {
+    vi.mocked(getInstitutionBySlug).mockResolvedValue(null);
+    const response = await institutionRoute.GET(
+      request("/institutions/nacrt"),
+      params({ slug: "nacrt" }),
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 404 for a malformed slug without querying", async () => {
+    const response = await institutionRoute.GET(
+      request("/institutions/MUP_"),
+      params({ slug: "MUP_" }),
+    );
+    expect(response.status).toBe(404);
+    expect(getInstitutionBySlug).not.toHaveBeenCalled();
   });
 });
 

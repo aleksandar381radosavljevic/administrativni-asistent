@@ -70,6 +70,11 @@ const responseSchemas: Record<string, z.ZodType> = {
   CategoryListResponse: schemas.categoryListResponseSchema,
   InstitutionRef: schemas.institutionRefSchema,
   InstitutionSummary: schemas.institutionSummarySchema,
+  Institution: schemas.institutionSchema,
+  InstitutionDetail: schemas.institutionDetailSchema,
+  InstitutionListResponse: schemas.institutionListResponseSchema,
+  ProcedureRef: schemas.procedureRefSchema,
+  ProcedureListResponse: schemas.procedureListResponseSchema,
   ProcedureSummary: schemas.procedureSummarySchema,
   ProcedureDetail: schemas.procedureDetailSchema,
   ProcedureInstitution: schemas.procedureInstitutionSchema,
@@ -80,6 +85,14 @@ const responseSchemas: Record<string, z.ZodType> = {
   LifeEventDetail: schemas.lifeEventDetailSchema,
   ProcedureInEvent: schemas.procedureInEventSchema,
   Dependency: schemas.dependencySchema,
+  DependencyListResponse: schemas.dependencyListResponseSchema,
+  Synonym: schemas.synonymSchema,
+  SynonymListResponse: schemas.synonymListResponseSchema,
+  AiQuery: schemas.aiQuerySchema,
+  AiQueryListResponse: schemas.aiQueryListResponseSchema,
+  AiQueryStatsResponse: schemas.aiQueryStatsResponseSchema,
+  AuditLogEntry: schemas.auditLogEntrySchema,
+  AuditLogListResponse: schemas.auditLogListResponseSchema,
   LifeEventListResponse: schemas.lifeEventListResponseSchema,
   SearchResponse: schemas.searchResponseSchema,
 };
@@ -103,6 +116,7 @@ describe("enums match 03", () => {
     ["ContentStatus", schemas.contentStatusSchema],
     ["CostType", schemas.costTypeSchema],
     ["InstitutionKind", schemas.institutionKindSchema],
+    ["AuditAction", schemas.auditActionSchema],
   ] as const)("%s", (name, schema) => {
     expect(schema.options).toEqual(components[name].enum);
   });
@@ -136,6 +150,14 @@ describe("03 examples parse", () => {
     const example =
       contract.components.responses[name].content["application/json"].example;
     expect(schemas.errorSchema.parse(example)).toEqual(example);
+  });
+
+  it("GET /admin/ai-queries/stats 200 example", () => {
+    const example =
+      contract.paths["/admin/ai-queries/stats"].get.responses["200"].content[
+        "application/json"
+      ].example;
+    expect(schemas.aiQueryStatsResponseSchema.parse(example)).toEqual(example);
   });
 
   it("ValidationError example", () => {

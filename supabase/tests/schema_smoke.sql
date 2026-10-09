@@ -359,5 +359,109 @@ SELECT pg_temp.as_owner();
 SELECT pg_temp.expect_value('đ normalizes to dj: "rodjenih" = "рођених" = "rođenih"',
   $q$SELECT (aa_normalize('rodjenih') = aa_normalize('рођених') AND aa_normalize('rođenih') = aa_normalize('rodjenih'))::text$q$, 'true');
 
+\echo '== 8. Admin write functions (one transaction per call, audited)'
+SELECT pg_temp.as_anon();
+SELECT pg_temp.expect_error('anon cannot call admin_save_procedure',
+  $q$SELECT admin_save_procedure(p_id => NULL, p_procedure => '{}')$q$, ARRAY['42501']);
+SELECT pg_temp.as_owner();
+SELECT pg_temp.as_user();
+SELECT pg_temp.expect_error('non-admin user cannot save a procedure',
+  $q$SELECT admin_save_procedure(p_id => NULL, p_procedure => '{"title":"X","slug":"x-user","can_in_person":true,"can_online":false,"can_by_mail":false,"cost_type":"unknown","status":"draft","steps":[],"institution_ids":[]}')$q$,
+  ARRAY['42501']);
+SELECT pg_temp.as_owner();
+SELECT pg_temp.as_admin();
+CREATE TEMP TABLE saved (id uuid);
+GRANT ALL ON saved TO authenticated;
+SELECT pg_temp.expect_ok('admin creates a published procedure with steps, a document and an institution note',
+  $q$INSERT INTO saved SELECT admin_save_procedure(p_id => NULL, p_procedure => '{
+      "title": "Nova lična karta", "slug": "nova-licna", "description": null,
+      "can_online": false, "can_in_person": true, "can_by_mail": false,
+      "cost_type": "fixed", "cost_amount": "1500.00", "status": "published",
+      "steps": [{"sort_order": 1, "title": "Prvi", "description": "Opis"},
+                {"sort_order": 2, "title": "Drugi", "description": "Opis"}],
+      "documents": [{"sort_order": 1, "name": "Stara lična karta", "is_required": true}],
+      "institution_ids": ["b0000000-0000-0000-0000-000000000001"],
+      "institution_notes": {"b0000000-0000-0000-0000-000000000001": "Lično u stanici."}}')$q$);
+SELECT pg_temp.expect_value('saved procedure keeps money exact and the link note',
+  $q$SELECT p.cost_amount::text || '|' || pi.note FROM procedures p JOIN procedure_institutions pi ON pi.procedure_id = p.id
+      WHERE p.id = (SELECT id FROM saved)$q$, '1500.00|Lično u stanici.');
+SELECT pg_temp.expect_value('create audits the procedure, both steps, the document and the link',
+  $q$SELECT string_agg(entity_type, ',' ORDER BY entity_type) FROM audit_log
+      WHERE action = 'create' AND (entity_id = (SELECT id FROM saved)
+         OR entity_id IN (SELECT id FROM steps WHERE procedure_id = (SELECT id FROM saved))
+         OR entity_id IN (SELECT id FROM documents WHERE procedure_id = (SELECT id FROM saved)))$q$,
+  'documents,procedure_institutions,procedures,steps,steps');
+SELECT pg_temp.expect_ok('admin replaces the step list (1 changed, 2 removed, 3 added)',
+  $q$SELECT admin_save_procedure(p_id => (SELECT id FROM saved), p_procedure => '{
+      "title": "Nova lična karta", "slug": "nova-licna",
+      "can_online": false, "can_in_person": true, "can_by_mail": false,
+      "cost_type": "fixed", "cost_amount": "1500.00", "status": "published",
+      "steps": [{"sort_order": 1, "title": "Prvi izmenjen", "description": "Opis"},
+                {"sort_order": 3, "title": "Treći", "description": "Opis"}],
+      "documents": [{"sort_order": 1, "name": "Stara lična karta", "is_required": true}],
+      "institution_ids": ["b0000000-0000-0000-0000-000000000001"],
+      "institution_notes": {"b0000000-0000-0000-0000-000000000001": "Lično u stanici."}}')$q$);
+SELECT pg_temp.expect_value('steps now in order',
+  $q$SELECT string_agg(sort_order || ':' || title, ',' ORDER BY sort_order) FROM steps WHERE procedure_id = (SELECT id FROM saved)$q$,
+  '1:Prvi izmenjen,3:Treći');
+SELECT pg_temp.expect_value('replacing audits one update, one delete, one create for steps and nothing for unchanged rows',
+  $q$SELECT string_agg(action::text, ',' ORDER BY action::text) FROM audit_log
+      WHERE entity_type IN ('steps', 'documents', 'procedure_institutions', 'procedures') AND action <> 'create'
+        AND (diff -> 'procedure_id' ->> 'old' = (SELECT id::text FROM saved)
+          OR diff -> 'procedure_id' ->> 'new' = (SELECT id::text FROM saved)
+          OR entity_id IN (SELECT id FROM steps WHERE procedure_id = (SELECT id FROM saved)))$q$,
+  'delete,update');
+SELECT pg_temp.expect_error('saving with no steps cannot keep the procedure published (PR-01)',
+  $q$SELECT admin_save_procedure(p_id => (SELECT id FROM saved), p_procedure => '{
+      "title": "Nova lična karta", "slug": "nova-licna",
+      "can_online": false, "can_in_person": true, "can_by_mail": false,
+      "cost_type": "free", "status": "published", "steps": [],
+      "institution_ids": ["b0000000-0000-0000-0000-000000000001"]}')$q$,
+  ARRAY['23514']);
+SELECT pg_temp.expect_error('updating an unknown procedure raises no_data_found',
+  $q$SELECT admin_save_procedure(p_id => 'd0000000-0000-0000-0000-0000000000ff', p_procedure => '{"title":"X","slug":"x-none","can_in_person":true,"can_online":false,"can_by_mail":false,"cost_type":"unknown","status":"draft"}')$q$,
+  ARRAY['P0002']);
+SELECT pg_temp.expect_error('a taken slug is a unique violation',
+  $q$SELECT admin_save_procedure(p_id => NULL, p_procedure => '{"title":"X","slug":"izdavanje-pasosa","can_in_person":true,"can_online":false,"can_by_mail":false,"cost_type":"unknown","status":"draft"}')$q$,
+  ARRAY['23505']);
+
+SELECT pg_temp.expect_ok('admin replaces the procedures of "putujem": d01 removed, d02 kept',
+  $q$SELECT admin_set_life_event_procedures('e0000000-0000-0000-0000-000000000003',
+      '[{"procedure_id": "d0000000-0000-0000-0000-000000000002", "sort_order": 1}]')$q$);
+SELECT pg_temp.expect_value('the dependency of the removed procedure is gone',
+  $q$SELECT count(*)::text FROM procedure_dependencies WHERE life_event_id = 'e0000000-0000-0000-0000-000000000003'$q$, '0');
+SELECT pg_temp.expect_value('link and dependency deletions are audited under the event',
+  $q$SELECT string_agg(entity_type, ',' ORDER BY entity_type) FROM audit_log
+      WHERE entity_id = 'e0000000-0000-0000-0000-000000000003' AND action = 'delete'$q$,
+  'life_event_procedures,procedure_dependencies');
+SELECT pg_temp.expect_ok('admin reorders by swapping positions in one call',
+  $q$SELECT admin_set_life_event_procedures('e0000000-0000-0000-0000-000000000003',
+      '[{"procedure_id": "d0000000-0000-0000-0000-000000000001", "sort_order": 1},
+        {"procedure_id": "d0000000-0000-0000-0000-000000000002", "sort_order": 2}]'),
+     admin_set_life_event_procedures('e0000000-0000-0000-0000-000000000003',
+      '[{"procedure_id": "d0000000-0000-0000-0000-000000000001", "sort_order": 2},
+        {"procedure_id": "d0000000-0000-0000-0000-000000000002", "sort_order": 1}]')$q$);
+SELECT pg_temp.expect_error('an empty list on a published event is rejected (PR-04)',
+  $q$SELECT admin_set_life_event_procedures('e0000000-0000-0000-0000-000000000003', '[]')$q$,
+  ARRAY['23514']);
+SELECT pg_temp.expect_error('an unknown event raises no_data_found',
+  $q$SELECT admin_set_life_event_procedures('e0000000-0000-0000-0000-0000000000ff', '[]')$q$,
+  ARRAY['P0002']);
+SELECT pg_temp.expect_error('an unknown procedure is a foreign key violation',
+  $q$SELECT admin_set_life_event_procedures('e0000000-0000-0000-0000-000000000003',
+      '[{"procedure_id": "d0000000-0000-0000-0000-0000000000ff", "sort_order": 1}]')$q$,
+  ARRAY['23503']);
+
+SELECT pg_temp.expect_value('admin reads AI query counts per life event',
+  $q$SELECT string_agg(coalesce(slug, '-') || ':' || count || ':' || unanswered_count, ',') FROM admin_ai_query_stats()$q$,
+  'selim-se:1:0');
+SELECT pg_temp.expect_value('the period filter excludes older queries',
+  $q$SELECT count(*)::text FROM admin_ai_query_stats(now() + interval '1 minute', NULL)$q$, '0');
+SELECT pg_temp.as_owner();
+SELECT pg_temp.as_user();
+SELECT pg_temp.expect_value('a non-admin user counts nothing (RLS)',
+  $q$SELECT count(*)::text FROM admin_ai_query_stats()$q$, '0');
+SELECT pg_temp.as_owner();
+
 \echo '== All checks passed'
 ROLLBACK;

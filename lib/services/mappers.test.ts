@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  toInstitutionDetail,
   toLifeEventDetail,
   toLifeEventSummary,
   toProcedureDetail,
   type LifeEventDetailRow,
   type ProcedureDetailRow,
 } from "./mappers";
-import { lifeEventDetailSchema, procedureDetailSchema } from "./schemas";
+import {
+  institutionDetailSchema,
+  lifeEventDetailSchema,
+  procedureDetailSchema,
+} from "./schemas";
 import { escapeLike, orderByIds } from "./search";
 
 const now = new Date("2026-10-07T12:00:00Z");
@@ -167,6 +172,36 @@ describe("toProcedureDetail", () => {
 
   it("marks a never-verified procedure as stale", () => {
     expect(detail.is_stale).toBe(true);
+  });
+});
+
+describe("toInstitutionDetail", () => {
+  const detail = toInstitutionDetail(
+    {
+      id: "20000000-0000-4000-8000-000000000001",
+      ...institution,
+      address: null,
+      website: null,
+      phone: null,
+      email: null,
+      working_hours: null,
+      status: "published",
+      description: null,
+      procedure_institutions: [
+        { procedure: { ...procedure(A, "Zamena", null), description: null } },
+        { procedure: { ...procedure(B, "Izvod", null), description: null } },
+      ],
+    },
+    now,
+  );
+
+  it("matches the contract", () => {
+    expect(institutionDetailSchema.parse(detail)).toEqual(detail);
+  });
+
+  it("lists procedures alphabetically without the link rows", () => {
+    expect(detail.procedures.map((p) => p.title)).toEqual(["Izvod", "Zamena"]);
+    expect(detail).not.toHaveProperty("procedure_institutions");
   });
 });
 

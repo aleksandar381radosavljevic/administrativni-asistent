@@ -47,6 +47,33 @@ describe("mapDbError", () => {
     expect(statusAndCode("22P02")).toEqual([400, "bad_request"]);
   });
 
+  it("maps no_data_found from the admin write functions to 404", () => {
+    expect(statusAndCode("P0002")).toEqual([404, "not_found"]);
+  });
+
+  it("names the field when a publish rule or a reference is broken", () => {
+    expect(
+      mapDbError({
+        code: "23514",
+        message: "procedure x is published but has no steps",
+      }).details,
+    ).toEqual([
+      { field: "steps", message: "Procedura mora imati najmanje jedan korak." },
+    ]);
+    expect(
+      mapDbError({
+        code: "23503",
+        message:
+          'insert or update on table "procedure_dependencies" violates foreign key constraint "fk_pd_depends_on_in_event"',
+      }).details,
+    ).toEqual([
+      {
+        field: "depends_on_id",
+        message: "Procedura nije u ovom životnom događaju.",
+      },
+    ]);
+  });
+
   it("hides anything unknown behind a 500", () => {
     const error = mapDbError({
       code: "XX000",
