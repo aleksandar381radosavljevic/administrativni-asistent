@@ -168,7 +168,14 @@ Routes follow [ADR 0011](decisions/0011-content-and-copy-defaults.md): no catch-
 | Checklist | Server-rendered event data + client component for state | State lives in `localStorage` only |
 | Admin | Dynamic, never cached | Always fresh data |
 
-Cached reads are tagged by entity (for example `life-event:<id>`, `procedure:<id>`, `catalog`). Every admin write handler invalidates the affected tags with Next.js on-demand revalidation (`revalidateTag` / `updateTag`), so a change is visible immediately; UF-09 requires that a new dependency shows up in the checklist at once, which a one-hour ISR window would break. A time-based fallback of one hour stays as a safety net.
+Caching uses Next.js Cache Components ([ADR 0017](decisions/0017-cache-components.md)): `cacheComponents` is on, data is dynamic by default, and the public read functions in `lib/services` cache their database reads with `use cache`. Pages and route handlers share these functions (§4.1), so they share the cache.
+
+- **Cached**: `listCategories`, `listLifeEvents`, `listProcedures`, `listInstitutions`, `getLifeEventBySlug`, `getProcedureBySlug`, `getInstitutionBySlug` and the AI catalog (§4.3). Not cached: search, admin reads, and anything per user.
+- **Tags** (`lib/cache/tags.ts`): lists and the catalog carry `catalog`; a found detail carries its entity tag (`life-event:<id>`, `procedure:<id>`, `institution:<id>`); a slug that matches nothing carries `catalog`, so publishing or renaming content replaces the cached 404.
+- **Invalidation**: every admin write handler expires the affected tags plus `catalog` with `revalidateTag(tag, { expire: 0 })` (`lib/cache/revalidate.ts`), so the next request reads fresh data; UF-09 requires that a new dependency shows up in the checklist at once. `updateTag` is not used because it works only in Server Actions and the writes come from route handlers; the recommended `"max"` profile is not used because it serves stale content once more.
+- **Lifetime**: `cacheLife("hours")` in every cached scope, so a time-based refresh after one hour stays as a safety net.
+- **Rules**: a cached scope gets only plain arguments, uses the cookie-less anon client and never reads cookies or headers. Values that depend on today (the stale warning, PR-07) are computed outside the cache from the cached `last_verified_at`.
+- **Route handlers**: public `GET` handlers run at request time and read through the cached services. `GET /api/v1/categories` reads nothing from the request, so it calls `connection()`; otherwise it would be prerendered at build time, and the build must not need Supabase or its secrets.
 
 Checklist state uses the shape from [ADR 0011](decisions/0011-content-and-copy-defaults.md), stored under a single `localStorage` key, `aa:checklist`:
 
@@ -228,7 +235,7 @@ Retrieval uses the content catalog in a cached system prompt ([ADR 0006](decisio
 
 `was_answered` comes from structured output, never from parsing the answer text.
 
-The catalog is built from the database, ordered deterministically (by ID), and cached under the `catalog` tag. It is rebuilt only when content is published, archived or renamed, so the cached prompt prefix stays byte-identical between requests. Nothing volatile (dates, request IDs) goes into the system prompt.
+The catalog is built from the database, ordered deterministically (by ID), and cached with `use cache` under the `catalog` tag (§3.2), which every admin write expires. Its content changes only when content is published, archived or renamed; the hourly time-based refresh rebuilds the same bytes, so the cached prompt prefix stays byte-identical between requests. Nothing volatile (dates, request IDs) goes into the system prompt.
 
 ### 4.4 Rate limiting
 
@@ -431,6 +438,7 @@ Architecture decisions are recorded as ADRs in [`docs/decisions/`](decisions/), 
 - [0007](decisions/0007-redact-pii-in-ai-chat.md) – PII redaction, Sentry scrubbing, hashed IPs
 - [0009](decisions/0009-testing-stack.md) – Vitest, Playwright, SQL tests
 - [0010](decisions/0010-build-osnova-as-package.md) – Osnova as a separate package
+- [0017](decisions/0017-cache-components.md) – Cache Components, `use cache` with tags for public reads
 
 ---
 
