@@ -14,6 +14,23 @@ export const labels = {
     validation: "Proveri označena polja.",
     internal: "Došlo je do greške. Pokušaj ponovo.",
     invalidJson: "Telo zahteva nije ispravan JSON.",
+    // {minutes} is filled with minutesLabel() (03 TooManyRequests).
+    rateLimited:
+      "Iskoristio si {limit} pitanja za ovaj sat. Pokušaj ponovo za {minutes}.",
+    aiUnavailable:
+      "Asistent trenutno nije dostupan. Pokušaj ponovo kasnije ili pronađi svoj životni događaj na početnoj strani.",
+  },
+  ai: {
+    // The fixed answer when the content does not cover the question (07 §2.4).
+    noInformation:
+      "Nemam tu informaciju u bazi znanja. Preporučujem da proveriš direktno kod nadležne institucije.",
+    // Placeholders that replace personal data in chat messages (ADR 0007).
+    redacted: {
+      jmbg: "[JMBG]",
+      phone: "[TELEFON]",
+      email: "[EMAIL]",
+      document_number: "[BROJ DOKUMENTA]",
+    },
   },
   // Field messages in a 422 `details` list (03 ValidationError).
   validation: {
@@ -44,5 +61,8 @@ export const labels = {
     unknownProcedure: "Procedura ne postoji.",
     unknownInstitution: "Organizacija ne postoji.",
     procedureNotInEvent: "Procedura nije u ovom životnom događaju.",
+    chatRolesAlternate: "Poruke moraju naizmenično biti tvoje i asistentove.",
+    chatLastFromUser: "Poslednja poruka mora biti tvoje pitanje.",
+    chatQuestionTooShort: "Pitanje mora imati bar 3 karaktera.",
   },
 } as const;

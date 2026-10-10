@@ -70,7 +70,7 @@ Shown at the top of the procedure page (P5), as a `warning` Badge "Proveri podat
 
 ### 0.4 Caching and freshness
 
-- Public pages are cached and tagged per entity (`life-event:{id}`, `procedure:{id}`, `institution:{id}`, `categories`, `catalog`). Every admin save calls on-demand revalidation for the affected tags, so a published change is visible on the next request (UF-09: "the checklist immediately reflects the new dependency"). There is no time-based ISR window.
+- Public reads are cached with `use cache` and tagged per entity (`life-event:{id}`, `procedure:{id}`, `institution:{id}`, plus `catalog` for lists and the AI catalog; [ADR 0017](decisions/0017-cache-components.md)). Every admin save expires the affected tags, so a published change is visible on the next request (UF-09: "the checklist immediately reflects the new dependency"). The one-hour `cacheLife("hours")` refresh is only a safety net (04 §3.2).
 - The checklist state lives only in the browser; the procedures and dependencies it uses come from the cached life event data.
 
 ### 0.5 Errors and API states

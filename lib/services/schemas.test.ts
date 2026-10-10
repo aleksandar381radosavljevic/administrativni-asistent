@@ -95,6 +95,10 @@ const responseSchemas: Record<string, z.ZodType> = {
   AuditLogListResponse: schemas.auditLogListResponseSchema,
   LifeEventListResponse: schemas.lifeEventListResponseSchema,
   SearchResponse: schemas.searchResponseSchema,
+  AiChatMessage: schemas.aiChatMessageSchema,
+  AiChatRequest: schemas.aiChatRequestSchema,
+  AiChatResponse: schemas.aiChatResponseSchema,
+  AiRedaction: schemas.aiRedactionSchema,
 };
 
 describe("response schemas match 03 components", () => {
@@ -117,6 +121,7 @@ describe("enums match 03", () => {
     ["CostType", schemas.costTypeSchema],
     ["InstitutionKind", schemas.institutionKindSchema],
     ["AuditAction", schemas.auditActionSchema],
+    ["AiRedactionKind", schemas.aiRedactionKindSchema],
   ] as const)("%s", (name, schema) => {
     expect(schema.options).toEqual(components[name].enum);
   });
@@ -158,6 +163,38 @@ describe("03 examples parse", () => {
         "application/json"
       ].example;
     expect(schemas.aiQueryStatsResponseSchema.parse(example)).toEqual(example);
+  });
+
+  it.each(["first_question", "follow_up"])(
+    "POST /ai/chat %s request example",
+    (name) => {
+      const example =
+        contract.paths["/ai/chat"].post.requestBody.content["application/json"]
+          .examples[name].value;
+      expect(schemas.aiChatRequestSchema.parse(example)).toEqual(example);
+    },
+  );
+
+  it("POST /ai/chat 200 example", () => {
+    const example =
+      contract.paths["/ai/chat"].post.responses["200"].content[
+        "application/json"
+      ].example;
+    expect(schemas.aiChatResponseSchema.parse(example)).toEqual(example);
+  });
+
+  it("TooManyRequests example", () => {
+    const example =
+      contract.components.responses.TooManyRequests.content["application/json"]
+        .example;
+    expect(schemas.rateLimitErrorSchema.parse(example)).toEqual(example);
+  });
+
+  it("AiUnavailable example", () => {
+    const example =
+      contract.components.responses.AiUnavailable.content["application/json"]
+        .example;
+    expect(schemas.errorSchema.parse(example)).toEqual(example);
   });
 
   it("ValidationError example", () => {
