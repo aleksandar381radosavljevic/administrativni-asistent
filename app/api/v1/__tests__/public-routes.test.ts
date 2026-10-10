@@ -24,6 +24,11 @@ import {
 } from "@/test/fixtures";
 
 vi.mock("@/lib/services/categories", () => ({ listCategories: vi.fn() }));
+// connection() needs a Next.js request scope, which Vitest does not have.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
+}));
 vi.mock("@/lib/services/life-events", () => ({
   listLifeEvents: vi.fn(),
   getLifeEventBySlug: vi.fn(),

@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { redirect } from "next/navigation";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import type { ApiError } from "./errors";
-import { parseBody, parseId } from "./handler";
+import { ApiError } from "./errors";
+import { handle, parseBody, parseId } from "./handler";
 
 const schema = z.object({
   title: z.string().trim().min(1).max(5),
@@ -20,6 +21,30 @@ async function failure(promise: Promise<unknown>) {
   }
   throw new Error("expected a rejection");
 }
+
+describe("handle", () => {
+  it("answers an ApiError with its contract body", async () => {
+    const response = await handle(async () => {
+      throw ApiError.notFound();
+    });
+    expect(response.status).toBe(404);
+  });
+
+  it("hides an unexpected error behind a 500", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await handle(async () => {
+      throw new Error("boom");
+    });
+    expect(response.status).toBe(500);
+    log.mockRestore();
+  });
+
+  it("lets Next.js control-flow errors through to Next.js", async () => {
+    await expect(handle(async () => redirect("/elsewhere"))).rejects.toThrow(
+      "NEXT_REDIRECT",
+    );
+  });
+});
 
 describe("parseBody", () => {
   it("returns the parsed body", async () => {

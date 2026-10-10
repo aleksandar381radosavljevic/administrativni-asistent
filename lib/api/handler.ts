@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { labels } from "@/lib/i18n/labels";
 import { idSchema } from "@/lib/services/schemas";
@@ -13,6 +14,10 @@ export async function handle(run: () => Promise<Response>): Promise<Response> {
   try {
     return await run();
   } catch (error) {
+    // Next.js signals control flow by throwing, for example when a build-time
+    // prerender reaches request data under Cache Components. Those errors
+    // must reach Next.js, not become a logged 500.
+    unstable_rethrow(error);
     const apiError = error instanceof ApiError ? error : ApiError.internal();
     if (apiError.status >= 500) console.error("Route handler failed", error);
     return Response.json(apiError.toBody(), { status: apiError.status });

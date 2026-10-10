@@ -1,11 +1,14 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { mapDbError } from "@/lib/api/errors";
+import { CATALOG_TAG } from "@/lib/cache/tags";
 import { createAnonClient } from "@/lib/supabase/anon";
 
 // The content catalog for the AI assistant (ADR 0006, 04 §4.3): ids, slugs
 // and titles of everything public, plus the synonyms. Read with the anon
 // client, so RLS limits it to published content and hides procedures that
-// are in no published life event (PR-05).
+// are in no published life event (PR-05). Cached under the `catalog` tag,
+// which every admin write expires (ADR 0017).
 
 export interface CatalogLifeEvent {
   id: string;
@@ -45,6 +48,12 @@ interface LifeEventRow {
  * the cached prompt prefix, and any change in order would be a cache miss.
  */
 export async function getCatalog(): Promise<Catalog> {
+  "use cache";
+  // Admin writes expire the tag at once; "hours" (revalidate 1 h) is the
+  // safety net of 04 §3.2. A time-based refresh rebuilds the same bytes, so
+  // the prompt cache is not disturbed.
+  cacheLife("hours");
+  cacheTag(CATALOG_TAG);
   const client = createAnonClient();
   const [events, procedures, synonyms] = await Promise.all([
     // `!inner`: an event whose procedures are all hidden is hidden too, as

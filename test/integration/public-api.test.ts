@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import * as categoriesRoute from "@/app/api/v1/categories/route";
 import * as institutionRoute from "@/app/api/v1/institutions/[slug]/route";
 import * as institutionsRoute from "@/app/api/v1/institutions/route";
@@ -21,6 +21,15 @@ import {
 
 // Public read endpoints against the local Supabase stack loaded with
 // supabase/seed.sql. Responses are parsed with the contract schemas.
+
+// cacheLife() and cacheTag() throw outside a Next.js cache scope, and Vitest
+// runs `use cache` functions as plain functions (ADR 0017).
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
+// connection() needs a Next.js request scope, which Vitest does not have.
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  connection: vi.fn(async () => {}),
+}));
 
 const request = (path: string) =>
   new NextRequest(`http://localhost/api/v1${path}`);

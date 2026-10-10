@@ -1,5 +1,7 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { mapDbError } from "@/lib/api/errors";
+import { CATALOG_TAG, procedureTag } from "@/lib/cache/tags";
 import { createAnonClient } from "@/lib/supabase/anon";
 import {
   PROCEDURE_DETAIL_SELECT,
@@ -22,11 +24,23 @@ import type {
 export async function listProcedures(
   query: ProcedureListQuery,
 ): Promise<ProcedureListResponse> {
-  const client = createAnonClient();
-  const empty = {
-    data: [],
-    pagination: { total: 0, limit: query.limit, offset: query.offset },
+  const { rows, total } = await loadProcedureRows(query);
+  // Mapped outside the cache: the stale flags depend on today (PR-07).
+  const now = new Date();
+  return {
+    data: rows.map((row) => toProcedureSummary(row, now)),
+    pagination: { total, limit: query.limit, offset: query.offset },
   };
+}
+
+async function loadProcedureRows(
+  query: ProcedureListQuery,
+): Promise<{ rows: ProcedureSummaryRow[]; total: number }> {
+  "use cache";
+  // Admin writes expire the tag at once; "hours" (revalidate 1 h) is the safety net of 04 §3.2.
+  cacheLife("hours");
+  cacheTag(CATALOG_TAG);
+  const client = createAnonClient();
 
   // Why resolve the slug first: filtering through two embedded levels
   // (link row, then institution) is easy to get subtly wrong in PostgREST,
@@ -39,7 +53,7 @@ export async function listProcedures(
       .eq("slug", query.institution_slug)
       .maybeSingle();
     if (error) throw mapDbError(error);
-    if (data === null) return empty;
+    if (data === null) return { rows: [], total: 0 };
     institutionId = data.id;
   }
 
@@ -63,12 +77,7 @@ export async function listProcedures(
     .range(query.offset, query.offset + query.limit - 1)
     .overrideTypes<ProcedureSummaryRow[], { merge: false }>();
   if (error) throw mapDbError(error);
-
-  const now = new Date();
-  return {
-    data: data.map((row) => toProcedureSummary(row, now)),
-    pagination: { total: count ?? 0, limit: query.limit, offset: query.offset },
-  };
+  return { rows: data, total: count ?? 0 };
 }
 
 /**
@@ -79,6 +88,17 @@ export async function listProcedures(
 export async function getProcedureBySlug(
   slug: string,
 ): Promise<ProcedureDetail | null> {
+  const row = await loadProcedureRow(slug);
+  // Mapped outside the cache: the stale flag depends on today (PR-07).
+  return row === null ? null : toProcedureDetail(row, new Date());
+}
+
+async function loadProcedureRow(
+  slug: string,
+): Promise<ProcedureDetailRow | null> {
+  "use cache";
+  // Admin writes expire the tag at once; "hours" (revalidate 1 h) is the safety net of 04 §3.2.
+  cacheLife("hours");
   const { data: row, error } = await createAnonClient()
     .from("procedures")
     .select(PROCEDURE_DETAIL_SELECT)
@@ -86,5 +106,8 @@ export async function getProcedureBySlug(
     .maybeSingle()
     .overrideTypes<ProcedureDetailRow | null, { merge: false }>();
   if (error) throw mapDbError(error);
-  return row === null ? null : toProcedureDetail(row, new Date());
+  // A miss is tagged with the catalog, which every write expires, so a
+  // newly published or renamed procedure replaces the cached null.
+  cacheTag(row === null ? CATALOG_TAG : procedureTag(row.id));
+  return row;
 }
