@@ -18,6 +18,14 @@ jobs:
   checks:
     name: Lint, typecheck, unit tests, build
     runs-on: ubuntu-latest
+    # Osnova comes from GitHub Packages; .npmrc reads the token from NPM_TOKEN.
+    # The job token can read the packages because the owner granted this
+    # repository Actions access to them.
+    permissions:
+      contents: read
+      packages: read
+    env:
+      NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

@@ -150,6 +150,7 @@ Per [ADR 0009](decisions/0009-testing-stack.md). Every behavior change ships wit
 | Level | Tool | Location | Covers |
 |---|---|---|---|
 | Logic | Vitest | next to the source, `*.test.ts` | dependency phases (topological order), checklist state and storage format, PII redaction, cost display, stale check |
+| Components | Vitest + Testing Library in jsdom | next to the component, `*.test.tsx` | what a user sees and can do on a component: content, links, states, keyboard and validation |
 | Database | SQL tests on the local Supabase stack | `supabase/tests/` | every RLS policy (anon cannot read drafts or child rows of drafts, cannot write anything), cycle rejection, audit triggers, `audit_log` immutability |
 | Flows | Playwright | `e2e/` | find a life event, follow a procedure, use the checklist |
 
