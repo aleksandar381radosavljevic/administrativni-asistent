@@ -54,6 +54,8 @@
   --color-danger-hover: var(--aa-rust-strong-hover);
   --color-danger-soft: var(--aa-rust-soft);
   --color-focus: var(--aa-amber-strong);
+  /* Dialog backdrop (Osnova 0.2.0): the theme's ink, half transparent. */
+  --color-scrim: rgb(43 38 34 / 0.5);
 
   /* Page layout (06 §9.1) */
   --layout-container: 72rem;

@@ -54,6 +54,28 @@ export const labels = {
     notFound: "Ovaj životni događaj ne postoji ili više nije dostupan.",
     loading: "Učitavam životni događaj…",
   },
+  // P4 Checklist (08 P4, 06 §12.14).
+  checklistPage: {
+    title: "Checklist: {title}",
+    progress: "{done} / {total} završeno",
+    storageInfo:
+      "Napredak se čuva lokalno u ovom pretraživaču i nije sinhronizovan između uređaja.",
+    storageInfoMore:
+      "Ako obrišeš podatke pretraživača ili koristiš privatni prozor, napredak se gubi.",
+    storageBlocked:
+      "Pretraživač ne dozvoljava čuvanje. Napredak će se izgubiti kad zatvoriš stranicu.",
+    blockedBy: "Zavisi od: {titles} (još nije završeno)",
+    blockedWarning:
+      "Ova procedura zavisi od {titles}, koja još nije završena. Možeš da nastaviš, ali proveri redosled.",
+    announcement: "{title}: {status}. {done} / {total} završeno.",
+    reset: "Poništi napredak",
+    resetQuestion:
+      "Da li želiš da vratiš sve procedure ovog događaja na „Nije počelo”?",
+    resetConfirm: "Poništi",
+    resetCancel: "Odustani",
+    resetDone: "Napredak je poništen. 0 / {total} završeno.",
+    loading: "Učitavam checklist…",
+  },
   // Count forms by Serbian plural category (pluralize in format.ts).
   procedureCount: {
     one: "{count} procedura",

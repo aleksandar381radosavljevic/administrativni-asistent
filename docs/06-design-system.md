@@ -228,6 +228,7 @@ Previous values, measured with the same script, for reference:
   --color-danger-hover: var(--aa-rust-strong-hover);
   --color-danger-soft: var(--aa-rust-soft);
   --color-focus: var(--aa-amber-strong);
+  --color-scrim: rgb(43 38 34 / 0.5); /* dialog backdrop, Osnova 0.2.0 */
 
   color-scheme: light;
 }
