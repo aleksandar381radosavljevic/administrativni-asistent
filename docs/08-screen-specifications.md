@@ -144,7 +144,7 @@ Entry point. Lists all public life events grouped by category, with search and a
 - **Error:** §0.5.
 
 ### Accessibility and responsive
-- Chip selection is announced via `aria-pressed`; a polite live region says "Prikazano N životnih događaja".
+- The selected chip has `aria-current="true"` (the chips are links, 06 §12.12); a polite live region says "Prikazano N životnih događaja".
 - From 640 px the cards form a 2-column grid; from 1024 px 3 columns. Chips wrap, never scroll hidden.
 
 ---

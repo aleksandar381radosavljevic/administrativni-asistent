@@ -1,0 +1,33 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 4rem;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.title {
+  font-size: var(--text-heading-size);
+  line-height: var(--text-heading-line);
+  font-weight: var(--text-heading-weight);
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-data-size);
+  line-height: var(--text-data-line);
+  font-weight: var(--text-data-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  color: var(--color-text-muted);
+}

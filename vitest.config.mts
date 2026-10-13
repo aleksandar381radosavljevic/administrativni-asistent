@@ -30,6 +30,18 @@ export default defineConfig({
         },
       },
       {
+        // React components in a simulated DOM, queried the way users find
+        // them (role, label, text), with Testing Library.
+        resolve,
+        test: {
+          name: "components",
+          environment: "jsdom",
+          include: ["**/*.test.tsx"],
+          exclude: ["node_modules/**", ".next/**", "e2e/**"],
+          setupFiles: ["./test/setup-dom.ts"],
+        },
+      },
+      {
         // Route handlers against the local Supabase stack with the test seed
         // (`supabase start`). Needs SUPABASE_URL and SUPABASE_ANON_KEY from
         // `supabase status -o env`; run with `npm run test:integration`.

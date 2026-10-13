@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { format, minutesLabel } from "./format";
+import { format, minutesLabel, pluralize } from "./format";
 
 describe("format", () => {
   it("fills placeholders by name", () => {
@@ -27,5 +27,27 @@ describe("minutesLabel", () => {
     [60, "60 minuta"],
   ])("%i", (minutes, expected) => {
     expect(minutesLabel(minutes)).toBe(expected);
+  });
+});
+
+describe("pluralize", () => {
+  const forms = {
+    one: "{count} procedura",
+    few: "{count} procedure",
+    other: "{count} procedura (mn.)",
+  };
+
+  it.each([
+    [1, "1 procedura"],
+    [21, "21 procedura"],
+    [2, "2 procedure"],
+    [4, "4 procedure"],
+    [22, "22 procedure"],
+    [0, "0 procedura (mn.)"],
+    [5, "5 procedura (mn.)"],
+    [11, "11 procedura (mn.)"],
+    [12, "12 procedura (mn.)"],
+  ])("%i → %s", (count, expected) => {
+    expect(pluralize(forms, count)).toBe(expected);
   });
 });

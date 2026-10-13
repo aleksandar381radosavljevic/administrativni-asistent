@@ -1,0 +1,19 @@
+.root {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  border-radius: var(--radius-md);
+}
+
+.md {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+}
+
+.lg {
+  inline-size: 3rem;
+  block-size: 3rem;
+}

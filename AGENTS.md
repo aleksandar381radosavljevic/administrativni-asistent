@@ -6,7 +6,8 @@
 - `docs/` is the source of truth: product spec, domain model, API contract (`03-api-contract.yml`), architecture, coding standards and the ADRs in `docs/decisions/`. Read the relevant doc or ADR before changing what it covers; report conflicts instead of resolving them silently. `docs/05-coding-standards.md` holds the project-specific rules.
 - The schema lives in `supabase/migrations/`; `docs/01-domain-model.sql` is a documented copy of the initial migration, kept identical by `supabase/schema-copy.test.ts`. Change both together.
 - Seed data is fictional test content only (ADR 0015): never load `supabase/seed.sql` into production. Edit `supabase/seed/*.json` and run the `seed:generate` script instead of editing `seed.sql` by hand.
-- Theme: Osnova token overrides will live in `app/theme.css` once the Osnova package is published; no other file defines colors, spacing or fonts.
+- Theme: Osnova token overrides live in `app/theme.css`; no other file defines colors, spacing or fonts.
+- Osnova installs from GitHub Packages: `.npmrc` reads `NPM_TOKEN` (a classic PAT with `read:packages`; in CI the job's `GITHUB_TOKEN`).
 - TODO: switch the `ai-instructions` devDependency from the pinned commit to `#v0.2.0` once that tag exists.
 - Pitfalls: none yet. Add one whenever an agent makes the same mistake twice.
 

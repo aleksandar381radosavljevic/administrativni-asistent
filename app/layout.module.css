@@ -1,0 +1,24 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.main {
+  flex: 1;
+  inline-size: 100%;
+  max-inline-size: var(--layout-container);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+/* Focused only by the skip link, never by Tab: no ring around the whole page. */
+.main:focus {
+  outline: none;
+}
+
+@media (min-width: 40rem) {
+  .main {
+    padding-inline: var(--space-6);
+  }
+}
