@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { labels } from "@/lib/i18n/labels";
+import { SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from "@/lib/domain/search";
 
 // Response schemas for every endpoint and the query schemas of the public
 // endpoints, mirroring the components in docs/03-api-contract.yml (ADR 0013).
@@ -62,7 +63,7 @@ export const procedureListQuerySchema = paginationQuerySchema.extend({
 });
 
 export const searchQuerySchema = z.object({
-  q: z.string().trim().min(2).max(200),
+  q: z.string().trim().min(SEARCH_MIN_LENGTH).max(SEARCH_MAX_LENGTH),
   limit: limitSchema,
 });
 

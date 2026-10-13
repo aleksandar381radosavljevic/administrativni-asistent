@@ -1,0 +1,105 @@
+/*
+ * Project theme (06 §3.5): the values behind Osnova's semantic tokens. This
+ * is the only file that defines colors; components read the semantic tokens,
+ * never the --aa-* primitives. Typography, spacing, radius, shadow and motion
+ * use Osnova's defaults, which already match 06 §4-§8.
+ *
+ * Unlayered, so it wins over Osnova's `osnova` cascade layer whatever the
+ * import order. Every color pair is checked for WCAG 2.2 AA in 06 §3.3.
+ */
+:root {
+  /* Palette primitives (only referenced in this file) */
+  --aa-cream: #fbf6ed;
+  --aa-paper: #ffffff;
+  --aa-ink: #2b2622;
+  --aa-ink-muted: #6b6157;
+  --aa-clay: #ece3d3;
+  --aa-clay-dark: #dcd0bb;
+  --aa-line-strong: #8c8073;
+  --aa-amber: #e8743b;
+  --aa-amber-strong: #a04617;
+  --aa-amber-strong-hover: #8c3c13;
+  --aa-amber-soft: #fbe4d6;
+  --aa-sage: #6f9b7d;
+  --aa-sage-strong: #3f6b4e;
+  --aa-sage-soft: #e3efe7;
+  --aa-honey: #f2b544;
+  --aa-honey-strong: #7a5a12;
+  --aa-honey-soft: #fcefd2;
+  --aa-rust-strong: #9e3a33;
+  --aa-rust-strong-hover: #86302a;
+  --aa-rust-soft: #f7e2de;
+
+  /* Osnova semantic tokens, overridden by this theme */
+  --color-bg: var(--aa-cream);
+  --color-surface: var(--aa-paper);
+  --color-surface-sunken: var(--aa-cream);
+  --color-surface-neutral: var(--aa-clay);
+  --color-text: var(--aa-ink);
+  --color-text-muted: var(--aa-ink-muted);
+  --color-text-on-accent: var(--aa-paper);
+  --color-border-subtle: var(--aa-clay-dark);
+  --color-border: var(--aa-line-strong);
+  --color-accent: var(--aa-amber-strong);
+  --color-accent-hover: var(--aa-amber-strong-hover);
+  --color-accent-text: var(--aa-amber-strong);
+  --color-accent-soft: var(--aa-amber-soft);
+  --color-accent-decorative: var(--aa-amber);
+  --color-success: var(--aa-sage-strong);
+  --color-success-soft: var(--aa-sage-soft);
+  --color-attention: var(--aa-honey-strong);
+  --color-attention-fill: var(--aa-honey);
+  --color-attention-soft: var(--aa-honey-soft);
+  --color-danger: var(--aa-rust-strong);
+  --color-danger-hover: var(--aa-rust-strong-hover);
+  --color-danger-soft: var(--aa-rust-soft);
+  --color-focus: var(--aa-amber-strong);
+
+  /* Page layout (06 §9.1) */
+  --layout-container: 72rem;
+  --layout-reading: 40rem;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}

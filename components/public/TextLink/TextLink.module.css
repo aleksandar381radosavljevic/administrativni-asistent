@@ -1,0 +1,20 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--target-min);
+  color: var(--color-accent-text);
+  font-weight: var(--text-label-weight);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.root:hover {
+  color: var(--color-accent-hover);
+}
+
+.root:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,76 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.phase {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-block-end: var(--space-5);
+}
+
+/* The path line from this marker down to the next one (decorative). */
+.phase:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-block: 1.5rem 0;
+  inset-inline-start: calc(0.75rem - 1.5px);
+  inline-size: 3px;
+  background: var(--color-border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.phase[data-current]:not(:last-child)::before {
+  background: var(--color-accent-decorative);
+  opacity: 0.35;
+}
+
+.marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  background: var(--color-surface-neutral);
+  color: var(--color-text);
+  font-size: var(--text-caption-size);
+  line-height: 1;
+  font-weight: var(--text-eyebrow-weight);
+  border-radius: var(--radius-full);
+}
+
+.phase[data-current] .marker {
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  min-block-size: 1.5rem;
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+}
+
+.title {
+  font-weight: var(--text-eyebrow-weight);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}

@@ -1,0 +1,8 @@
+.root {
+  color: var(--color-accent-text);
+  font-size: var(--text-eyebrow-size);
+  line-height: var(--text-eyebrow-line);
+  font-weight: var(--text-eyebrow-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

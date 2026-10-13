@@ -2,6 +2,73 @@
 // The copy of record is in docs/08-screen-specifications.md and, for API
 // error messages, docs/03-api-contract.yml.
 export const labels = {
+  // Global public layout (08 §0.6).
+  layout: {
+    appName: "Administrativni asistent",
+    skipToContent: "Preskoči na sadržaj",
+    askAssistant: "Pitaj asistenta",
+    askAssistantShort: "Asistent",
+    mainNavigation: "Glavna navigacija",
+    disclaimer:
+      "Informacije su informativne. Za zvanične podatke proveri kod nadležne institucije.",
+    opensInNewTab: "(otvara se u novom tabu)",
+    loading: "Učitavam…",
+  },
+  // SearchField (06 §12.11, 08 P1/P2).
+  search: {
+    label: "Pretraži",
+    placeholder: "Npr. pasoš, prijava adrese, karton",
+    submit: "Traži",
+    tooShort: "Upiši bar 2 slova.",
+  },
+  // P1 Home (08 P1).
+  home: {
+    eyebrow: "Dobar dan",
+    title: "Šta ti se dešava?",
+    categories: "Kategorije",
+    allCategories: "Sve",
+    shownCount: {
+      one: "Prikazan {count} životni događaj",
+      few: "Prikazana {count} životna događaja",
+      other: "Prikazano {count} životnih događaja",
+    },
+    emptyTitle: "Još nema objavljenih životnih događaja.",
+    emptyDescription:
+      "Radimo na sadržaju. U međuvremenu možeš da pitaš asistenta.",
+    notFoundTitle: "Ne nalaziš svoju situaciju?",
+    searchLink: "Pretraži",
+    loading: "Učitavam životne događaje…",
+  },
+  // P3 Life event (08 P3) and the shared cards (06 §12).
+  lifeEvent: {
+    openChecklist: "Otvori checklist",
+    procedureCountTerm: "Broj procedura",
+    durationTerm: "Okvirno trajanje",
+    questionTitle: "Imaš pitanje o ovome?",
+    phases: "Faze",
+    phaseTitle: "Faza {number}",
+    phaseFirst: "možeš odmah, paralelno",
+    phaseLater: "posle procedura od kojih zavise",
+    dependsOn: "Zavisi od: {titles}",
+    stale: "Proveri podatke",
+    notFound: "Ovaj životni događaj ne postoji ili više nije dostupan.",
+    loading: "Učitavam životni događaj…",
+  },
+  // Count forms by Serbian plural category (pluralize in format.ts).
+  procedureCount: {
+    one: "{count} procedura",
+    few: "{count} procedure",
+    other: "{count} procedura",
+  },
+  // Full-page states (08 §0.5, P8).
+  errors: {
+    pageTitle: "Nismo uspeli da učitamo stranicu.",
+    retry: "Pokušaj ponovo",
+    home: "Početna",
+    notFoundTitle: "Ova stranica ne postoji.",
+    notFoundDescription:
+      "Možda je adresa pogrešno upisana ili sadržaj više nije dostupan.",
+  },
   // Shared display rules for public screens (08 §0.7).
   checklist: {
     todo: "Nije počelo",

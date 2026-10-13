@@ -1,0 +1,18 @@
+.footer {
+  border-block-start: var(--border-width) solid var(--color-border-subtle);
+}
+
+.inner {
+  max-inline-size: var(--layout-container);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+}
+
+@media (min-width: 40rem) {
+  .inner {
+    padding-inline: var(--space-6);
+  }
+}

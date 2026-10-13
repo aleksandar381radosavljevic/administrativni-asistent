@@ -594,8 +594,8 @@ Search form: `<form role="search">` with Osnova `Input` (`type="search"`, `iconS
 
 Category filter on Home.
 
-- A group of links or toggle buttons (`aria-pressed`) labelled "Kategorije". Each chip: pill, `--text-caption` weight 700, min-height 44 px, padding `--space-2` / `--space-4`.
-- Default: `--color-surface` fill, `--color-text` label, 1 px `--color-border`. Selected: `--color-accent` fill, text-on-accent, plus `aria-pressed="true"` (state is not color-only: the selected chip also shows a `check` icon).
+- A list of links labelled "Kategorije", each setting `?kategorija=` (08 P1), so the filter works without JavaScript. Each chip: pill, `--text-caption` weight 700, min-height 44 px, padding `--space-2` / `--space-4`.
+- Default: `--color-surface` fill, `--color-text` label, 1 px `--color-border`. Selected: `--color-accent` fill, text-on-accent, plus `aria-current="true"` (`aria-pressed` is only valid on buttons; the state is not color-only: the selected chip also shows a `check` icon).
 - Wraps onto multiple lines instead of hiding a horizontal scroll without a scrollbar (hidden horizontal scroll hid categories from keyboard and mouse users).
 
 ### 12.13 ProgressBar
@@ -639,6 +639,8 @@ Sticky composer at the bottom of the chat page.
 ### 12.18 ErrorState
 
 Full-section error: `triangle-alert` (24 px, `--color-danger`) + title (`--text-heading`, `--color-text`) + message (`--text-body`) + Button `secondary` with `rotate-cw` "Pokušaj ponovo". Built from EmptyState's layout with the danger icon; `role="alert"` only when it replaces content after a user action. Small inline errors use Banner `error` instead.
+
+Implemented as `PageMessage` (`components/public/PageMessage/`), shared with the not-found pages: their title is the page's `h1`, which Osnova's EmptyState (heading levels 2–4, no icon tone) cannot render. Candidate for Osnova: an EmptyState with `headingLevel={1}` and an icon tone would replace it.
 
 ### 12.19 Admin form pieces
 
