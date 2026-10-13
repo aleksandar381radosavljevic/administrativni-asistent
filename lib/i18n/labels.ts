@@ -2,6 +2,30 @@
 // The copy of record is in docs/08-screen-specifications.md and, for API
 // error messages, docs/03-api-contract.yml.
 export const labels = {
+  // Shared display rules for public screens (08 §0.7).
+  checklist: {
+    todo: "Nije počelo",
+    in_progress: "U toku",
+    done: "Završeno",
+  },
+  methods: {
+    can_online: "Online",
+    can_in_person: "Lično",
+    can_by_mail: "Poštom",
+  },
+  // A missing amount never means "Besplatno" (ADR 0008).
+  cost: {
+    free: "Besplatno",
+    fixed: "{amount} din",
+    variable: "Cena varira",
+    unknown: "Cena nepoznata",
+  },
+  institutionKind: {
+    government: "Državna institucija",
+    bank: "Banka",
+    employer: "Poslodavac",
+    other: "Organizacija",
+  },
   apiErrors: {
     badRequest: "Proveri parametre zahteva.",
     searchTooShort: "Unesi bar 2 karaktera za pretragu.",
