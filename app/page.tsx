@@ -27,6 +27,7 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
       <div className={styles.intro}>
         <p className={styles.eyebrow}>{labels.home.eyebrow}</p>
         <h1 className={styles.title}>{labels.home.title}</h1>
+        <p className={styles.lead}>{labels.home.intro}</p>
         <SearchField id={SEARCH_INPUT_ID} />
       </div>
       <Suspense fallback={<CatalogSkeleton />}>

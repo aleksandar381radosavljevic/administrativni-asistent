@@ -1,4 +1,4 @@
-# AI Instructions – Administrativni Asistent
+# AI Instructions – Kako sa državom
 
 **Version:** 2.0
 **Date:** 2026-10-05

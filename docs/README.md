@@ -1,4 +1,4 @@
-# Documentation – Administrativni Asistent
+# Documentation – Kako sa državom
 
 The Markdown (and SQL/YAML) files in `docs/` are the single source of truth for the product; there are no Word or Pages exports ([ADR 0011](decisions/0011-content-and-copy-defaults.md)). ADRs override the other documents where they conflict.
 
@@ -15,7 +15,7 @@ The Markdown (and SQL/YAML) files in `docs/` are the single source of truth for 
 | [07-ai-instructions.md](07-ai-instructions.md) | Instructions for coding agents; read first |
 | [08-screen-specifications.md](08-screen-specifications.md) | Every public and admin screen; UI copy of record |
 | [open-questions.md](open-questions.md) | All open questions with their current defaults |
-| [decisions/](decisions/) | ADRs 0001–0017, binding |
+| [decisions/](decisions/) | ADRs 0001–0017 and 0019, binding (0018 is reserved for a pending content ADR) |
 | [future/](future/) | Frozen mobile docs 09–11; not implementation input ([ADR 0002](decisions/0002-web-only-v1.md)) |
 
 SQL tests live in [`../supabase/tests/`](../supabase/tests/README.md).

@@ -1,12 +1,12 @@
 openapi: 3.0.3
 
 info:
-  title: Administrativni Asistent API
+  title: Kako sa državom API
   version: 1.1.0
   contact:
-    name: Administrativni Asistent
+    name: Kako sa državom
   description: |
-    REST API for Administrativni Asistent, a web app that guides citizens of Serbia
+    REST API for Kako sa državom, a web app that guides citizens of Serbia
     through administrative procedures by life event.
 
     Per [ADR 0003](decisions/0003-full-rest-api.md) this contract is the single data

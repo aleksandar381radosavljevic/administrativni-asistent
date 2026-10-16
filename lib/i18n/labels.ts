@@ -4,7 +4,7 @@
 export const labels = {
   // Global public layout (08 §0.6).
   layout: {
-    appName: "Administrativni asistent",
+    appName: "Kako sa državom",
     skipToContent: "Preskoči na sadržaj",
     askAssistant: "Pitaj asistenta",
     askAssistantShort: "Asistent",
@@ -25,6 +25,8 @@ export const labels = {
   home: {
     eyebrow: "Dobar dan",
     title: "Šta ti se dešava?",
+    intro:
+      "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koji je rok. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba.",
     categories: "Kategorije",
     allCategories: "Sve",
     shownCount: {
