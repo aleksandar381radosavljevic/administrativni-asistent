@@ -38,6 +38,19 @@ describe("parseEnv", () => {
       ),
     ).toThrow("SUPABASE_URL");
   });
+
+  it("rejects a Supabase URL with a path, such as the copied REST endpoint", () => {
+    expect(() =>
+      parseEnv(
+        supabaseEnvSchema,
+        {
+          SUPABASE_URL: "https://abc.supabase.co/rest/v1/",
+          SUPABASE_ANON_KEY: "anon",
+        },
+        "Supabase",
+      ),
+    ).toThrow("SUPABASE_URL");
+  });
 });
 
 describe(".env.example", () => {
