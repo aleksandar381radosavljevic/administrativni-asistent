@@ -89,7 +89,7 @@ Errors go to Sentry with route and entity id as context; request bodies on `/ai/
 ### 0.6 Global layout (public)
 
 - Skip link "Preskoči na sadržaj" → `<main id="sadrzaj">`.
-- Header: app name (link to `/`), link "Pitaj asistenta" (`message-circle`, to `/ai`). On narrow screens the link keeps an icon and a visible short label "Asistent".
+- Header: app name "Kako sa državom" ([ADR 0019](decisions/0019-product-name.md)) (link to `/`), link "Pitaj asistenta" (`message-circle`, to `/ai`). On narrow screens the link keeps an icon and a visible short label "Asistent".
 - `<main>` with one `h1` per page; focus moves to the `h1` after client navigation ([06 §9.3](06-design-system.md)).
 - Footer: short disclaimer "Informacije su informativne. Za zvanične podatke proveri kod nadležne institucije." and a link to the source of truth for each procedure where shown.
 - Container max `72rem`, reading column max `40rem`, side gutter 16 px on phones, 24 px from 640 px ([06 §9.1](06-design-system.md)).
@@ -113,6 +113,7 @@ Entry point. Lists all public life events grouped by category, with search and a
 
 ### Layout and components
 - Eyebrow text "Dobar dan" (`--text-eyebrow`, muted) and `h1` "Šta ti se dešava?".
+- Lead paragraph (muted, reading width) under the `h1`: "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koji je rok. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba." ([ADR 0019](decisions/0019-product-name.md))
 - SearchField ([06 §12.11](06-design-system.md)), submits to `/pretraga?q=`.
 - CategoryFilter: "Sve" + one chip per category that has at least one public life event, in `categories.sort_order`.
 - Per category: SectionLabel (`h2`) with the category name, then a list (`ul`) of LifeEventCards (EventIcon, title, "N procedure · {estimated_duration}", chevron).

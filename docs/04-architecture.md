@@ -1,4 +1,4 @@
-# Architecture – Administrativni Asistent
+# Architecture – Kako sa državom
 
 **Version:** 2.0
 **Date:** 2026-10-05

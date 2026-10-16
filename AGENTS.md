@@ -1,4 +1,4 @@
-# Administrativni asistent
+# Kako sa državom (repo: administrativni-asistent)
 
 ## This project
 <!-- Only what an agent can't infer from the code. These rules take precedence over the shared rules below. -->

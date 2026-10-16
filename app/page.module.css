@@ -26,6 +26,12 @@
   font-weight: var(--text-display-weight);
 }
 
+.lead {
+  margin-block-end: var(--space-2);
+  max-inline-size: var(--layout-reading);
+  color: var(--color-text-muted);
+}
+
 .help {
   display: flex;
   flex-direction: column;

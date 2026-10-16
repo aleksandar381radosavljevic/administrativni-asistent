@@ -1,4 +1,4 @@
-# Domain model: Administrativni Asistent
+# Domain model: Kako sa državom
 
 - Version: 1.1
 - Date: 2026-10-05

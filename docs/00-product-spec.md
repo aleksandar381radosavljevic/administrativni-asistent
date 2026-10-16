@@ -1,4 +1,4 @@
-# Administrativni Asistent – Product Specification
+# Kako sa državom – Product Specification
 
 - **Version:** 1.1
 - **Date:** 2026-10-05
@@ -21,7 +21,7 @@ When implementing anything in this system:
 
 ## 1. Purpose of this document
 
-This is the functional specification of Administrativni Asistent v1. It describes users, functional and non-functional requirements, business rules, edge cases, the permission model and integrations, precisely enough to implement without further clarification. Features planned for later versions are listed in [§11](#11-out-of-scope-for-v1).
+This is the functional specification of Kako sa državom v1. It describes users, functional and non-functional requirements, business rules, edge cases, the permission model and integrations, precisely enough to implement without further clarification. Features planned for later versions are listed in [§11](#11-out-of-scope-for-v1).
 
 ## 2. Product overview
 
@@ -41,7 +41,7 @@ The user does not need to know the official name of a procedure. It is enough to
 
 ### 2.3 How it differs from existing services
 
-| Existing services (eUprava and similar) | Administrativni Asistent |
+| Existing services (eUprava and similar) | Kako sa državom |
 |---|---|
 | Official language: "Promena mesta prebivališta" | The user's language: "Selim se" |
 | Information scattered across institutions | Everything in one place, summarized |

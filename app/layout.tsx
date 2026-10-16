@@ -12,9 +12,9 @@ import {
 import styles from "./layout.module.css";
 
 export const metadata: Metadata = {
-  title: "Administrativni asistent",
+  title: "Kako sa državom",
   description:
-    "Vodič kroz administrativne procedure u Srbiji, po životnim događajima.",
+    "Papirologija u Srbiji, korak po korak: šta ti treba, koliko košta i koji je rok, po životnim događajima.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

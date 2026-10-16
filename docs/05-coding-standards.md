@@ -1,4 +1,4 @@
-# Coding Standards – Administrativni Asistent
+# Coding Standards – Kako sa državom
 
 **Version:** 2.0
 **Date:** 2026-10-05
