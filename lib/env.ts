@@ -10,7 +10,11 @@ import { z } from "zod";
 const nonEmpty = z.string().trim().min(1);
 
 export const supabaseEnvSchema = z.object({
-  SUPABASE_URL: z.url(),
+  // The project URL only: supabase-js appends `/rest/v1` itself, so a copied
+  // REST endpoint would double the path and fail every read with PGRST125.
+  SUPABASE_URL: z
+    .url()
+    .refine((url) => URL.canParse(url) && new URL(url).pathname === "/"),
   SUPABASE_ANON_KEY: nonEmpty,
 });
 
