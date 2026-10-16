@@ -8,7 +8,6 @@
 - Seed data is fictional test content only (ADR 0015): never load `supabase/seed.sql` into production. Edit `supabase/seed/*.json` and run the `seed:generate` script instead of editing `seed.sql` by hand.
 - Theme: Osnova token overrides live in `app/theme.css`; no other file defines colors, spacing or fonts.
 - Osnova installs from GitHub Packages: `.npmrc` reads `NPM_TOKEN` (a classic PAT with `read:packages`; in CI the job's `GITHUB_TOKEN`).
-- TODO: switch the `ai-instructions` devDependency from the pinned commit to `#v0.2.0` once that tag exists.
 - Pitfalls: none yet. Add one whenever an agent makes the same mistake twice.
 
 <!-- BEGIN:nextjs-agent-rules -->
