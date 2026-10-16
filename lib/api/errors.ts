@@ -148,6 +148,14 @@ export function mapDbError(error: DbError): ApiError {
     case "22P02": // invalid_text_representation, e.g. a malformed uuid
       return ApiError.badRequest();
     default:
+      // The client sees only a generic 500, so the cause has to reach the
+      // server log; pages call services directly, without the route handler
+      // that logs failed requests. Code and message only: `details` can hold
+      // row values.
+      console.error("Unmapped database error", {
+        code: error.code,
+        message: error.message,
+      });
       return ApiError.internal();
   }
 }

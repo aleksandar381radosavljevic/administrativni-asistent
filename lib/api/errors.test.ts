@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError, mapDbError } from "./errors";
 
 const statusAndCode = (code: string, message = "") => {
@@ -7,6 +7,10 @@ const statusAndCode = (code: string, message = "") => {
 };
 
 describe("mapDbError", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("maps a cycle rejected by the trigger to 409 circular_dependency", () => {
     expect(
       statusAndCode(
@@ -75,12 +79,25 @@ describe("mapDbError", () => {
   });
 
   it("hides anything unknown behind a 500", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     const error = mapDbError({
       code: "XX000",
       message: "relation secret_table does not exist",
     });
     expect([error.status, error.code]).toEqual([500, "internal_error"]);
     expect(error.message).not.toContain("secret_table");
+  });
+
+  it("logs the cause of an unmapped error on the server", () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    mapDbError({
+      code: "PGRST205",
+      message: "Could not find the table 'public.categories'",
+    });
+    expect(log).toHaveBeenCalledWith("Unmapped database error", {
+      code: "PGRST205",
+      message: "Could not find the table 'public.categories'",
+    });
   });
 
   it("gives validation errors a details array, as 03 ValidationError requires", () => {
