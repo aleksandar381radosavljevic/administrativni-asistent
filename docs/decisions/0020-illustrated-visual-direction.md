@@ -1,6 +1,6 @@
 # 0020. Illustrated visual direction with in-house SVG illustrations
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-16
 
 ## Context
@@ -17,8 +17,12 @@ For the illustrations: (a) in-house SVG drawn in code, (b) Open Peeps (CC0) plus
 
 For the design system: keep Osnova and extend it, or build a new design system for this app.
 
+For the top of the home page, three concepts: A, a dotted-paper background with a dashed route through life-event "stops"; B, life events as tilted, taped stickers on a dark background; C, the answer to "Šta ti se dešava?" as a large sentence, with the whole background taking the selected category's color.
+
 ## Decision
 Option 3 with in-house SVG illustrations (a), chosen by the owner on 2026-10-16. Osnova stays; the gaps go into Osnova.
+
+The top of the home page combines B and C (owner's choice, 2026-10-16): the stickers from B on C's light background. Hovering or focusing a sticker straightens it, shows its duration and "Pokaži korake", and tints the background, the greeting and the word "dešava?" in that category's color. A wave at the bottom leads into the cream of the rest of the page. On small screens the stickers become a horizontally scrolling row.
 
 ## Why
 The owner wants the app to attract people who land on it by chance; option 3 does that most. In-house SVG works now, takes its colors from theme tokens so contrast stays checkable, and carries no license; the illustration slots stay the same, so a commissioned set can replace it later without layout changes. Osnova is not the problem (the weaknesses are composition and app-level choices), and a second design system for one app would double the maintenance.
@@ -28,4 +32,5 @@ The owner wants the app to attract people who land on it by chance; option 3 doe
 - Illustrations are decorative (`aria-hidden`), live in the app as SVG components, and use only theme tokens for fill colors.
 - The category chips on P1 become links to category sections instead of filters; the monospace meta row and the procedure count on cards go away. 06 and 08 (P1) are updated with the implementation.
 - New copy in the concept (three trust lines, the assistant example, footer links) is a proposal for the content owner, not part of this decision.
-- Concept: https://claude.ai/artifact/A6rGiMYn7eHu6pD7eLd4yD. The status becomes Accepted when the owner confirms the concept.
+- The color change on hover is decoration, never the only cue: every sticker is a plain link, the selected one also gets an outline in its category color, and motion respects `prefers-reduced-motion`.
+- Concept, confirmed by the owner on 2026-10-16: https://claude.ai/artifact/A6rGiMYn7eHu6pD7eLd4yD.
