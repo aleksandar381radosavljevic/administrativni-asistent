@@ -1,0 +1,79 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.heading {
+  font-size: var(--text-eyebrow-size);
+  line-height: var(--text-eyebrow-line);
+  font-weight: var(--text-eyebrow-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Phone and tablet: one row that scrolls sideways (no hover there). */
+.pile {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  /* Room for the tilt and the shadow, which a scroll container would clip. */
+  padding: var(--space-6) var(--space-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  flex: 0 0 min(70%, 15rem);
+  scroll-snap-align: center;
+}
+
+/* The lifted sticker goes over its neighbours. */
+.item:is(:hover, :focus-within) {
+  z-index: 1;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+}
+
+.cue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-accent-text);
+  font-weight: var(--text-label-weight);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--easing-standard);
+}
+
+.item:is(:hover, :focus-within) .cue {
+  opacity: 1;
+}
+
+/* Desktop: a loose two-column pile, every other sticker set lower. */
+@media (min-width: 64rem) {
+  .pile {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+    padding: 0 0 var(--space-12);
+    overflow: visible;
+  }
+
+  .item:nth-child(even) {
+    transform: translateY(var(--space-12));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue {
+    transition: none;
+  }
+}

@@ -36,14 +36,67 @@ export function groupByCategory<
     .filter((group) => group.lifeEvents.length > 0);
 }
 
+/** Home's section id for a category: the target of its area link and of P3's back link. */
+export function categorySectionId(slug: string): string {
+  return `kategorija-${slug}`;
+}
+
+/** Osnova's categorical tones, one per category position (ADR 0020). */
+export const CATEGORY_TONES = [
+  "category-1",
+  "category-2",
+  "category-3",
+  "category-4",
+  "category-5",
+  "category-6",
+] as const;
+
+export type CategoryTone = (typeof CATEGORY_TONES)[number];
+
 /**
- * The selected category from `?kategorija=`, or null for "Sve". An unknown
- * slug, a repeated parameter or an empty value is treated as "Sve" (08 P1).
+ * The tone of the category at `index` in display order. Colors follow
+ * position, not identity, so no category is named in code; after six they
+ * repeat.
  */
-export function selectedCategory<C extends CategoryLike>(
-  groups: readonly CategoryGroup<C, LifeEventLike>[],
-  param: string | string[] | undefined,
-): C | null {
-  if (typeof param !== "string") return null;
-  return groups.find((g) => g.category.slug === param)?.category ?? null;
+export function categoryTone(index: number): CategoryTone {
+  return CATEGORY_TONES[index % CATEGORY_TONES.length] ?? "category-1";
+}
+
+/** How many life events Home features at the top (ADR 0020). */
+export const FEATURED_COUNT = 4;
+
+/**
+ * Home's featured life events: the first life event of each of the first
+ * four categories, each with its category's tone. Derived from the admin's
+ * ordering, so nothing is hard-coded (07 rule: content comes from the
+ * database).
+ */
+export function featuredLifeEvents<
+  C extends CategoryLike,
+  E extends LifeEventLike,
+>(
+  groups: readonly CategoryGroup<C, E>[],
+): { lifeEvent: E; tone: CategoryTone }[] {
+  return groups.slice(0, FEATURED_COUNT).flatMap((group, index) => {
+    const first = group.lifeEvents[0];
+    return first ? [{ lifeEvent: first, tone: categoryTone(index) }] : [];
+  });
+}
+
+/** How many life events the "Na primer" line under the search links to. */
+export const EXAMPLE_COUNT = 4;
+
+/**
+ * The life events behind the "Na primer" line: the first ones in catalog
+ * order that are not already featured, so the two never repeat each other.
+ */
+export function exampleLifeEvents<
+  C extends CategoryLike,
+  E extends LifeEventLike,
+>(groups: readonly CategoryGroup<C, E>[]): E[] {
+  const featured = new Set(featuredLifeEvents(groups).map((f) => f.lifeEvent));
+  return groups
+    .flatMap((group) => group.lifeEvents)
+    .filter((lifeEvent) => !featured.has(lifeEvent))
+    .slice(0, EXAMPLE_COUNT);
 }

@@ -1,0 +1,187 @@
+/*
+ * The field takes the tone of the hovered or focused sticker (FeaturedStickers
+ * sets `data-tone` on each). The default is the first area's tone, the one the
+ * first sticker has. Text on the field is --color-text or the tone's strong
+ * color, both AA on every `-soft` (06 §3.3).
+ */
+.hero {
+  --hero-field: var(--color-category-1-soft);
+  --hero-deep: var(--color-category-1);
+
+  position: relative;
+  overflow: hidden;
+  /* Full-bleed: out of main's container (the body clips the overflow). */
+  margin-inline: calc(50% - 50vw);
+  margin-block-start: calc(var(--space-6) * -1);
+  background-color: var(--hero-field);
+  transition: background-color var(--duration-slow) var(--easing-standard);
+}
+
+.hero:has([data-tone="category-2"]:is(:hover, :focus-within)) {
+  --hero-field: var(--color-category-2-soft);
+  --hero-deep: var(--color-category-2);
+}
+
+.hero:has([data-tone="category-3"]:is(:hover, :focus-within)) {
+  --hero-field: var(--color-category-3-soft);
+  --hero-deep: var(--color-category-3);
+}
+
+.hero:has([data-tone="category-4"]:is(:hover, :focus-within)) {
+  --hero-field: var(--color-category-4-soft);
+  --hero-deep: var(--color-category-4);
+}
+
+.hero:has([data-tone="category-5"]:is(:hover, :focus-within)) {
+  --hero-field: var(--color-category-5-soft);
+  --hero-deep: var(--color-category-5);
+}
+
+.hero:has([data-tone="category-6"]:is(:hover, :focus-within)) {
+  --hero-field: var(--color-category-6-soft);
+  --hero-deep: var(--color-category-6);
+}
+
+.glow {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.glowLarge,
+.glowSmall {
+  fill: var(--color-surface);
+}
+
+.glowLarge {
+  opacity: 0.38;
+}
+
+.glowSmall {
+  opacity: 0.45;
+}
+
+.wave {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  inline-size: 100%;
+  block-size: var(--space-12);
+  fill: var(--color-bg);
+}
+
+.inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-inline-size: var(--layout-container);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4) calc(var(--space-12) * 2);
+}
+
+.featured {
+  min-inline-size: 0;
+}
+
+.eyebrow,
+.accent {
+  color: var(--hero-deep);
+  transition: color var(--duration-slow) var(--easing-standard);
+}
+
+.eyebrow {
+  font-size: var(--text-eyebrow-size);
+  line-height: var(--text-eyebrow-line);
+  font-weight: var(--text-eyebrow-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display);
+  /* On a phone the hero step is at its minimum; one step up fills two lines. */
+  font-size: calc(var(--text-hero-size) * 1.3);
+  line-height: var(--text-hero-line);
+  font-weight: var(--text-hero-weight);
+  letter-spacing: var(--text-hero-tracking);
+}
+
+/* "dešava?" on its own line, at every width. */
+.accent {
+  display: block;
+}
+
+/* Quieter on a phone, below the stickers (muted is AA on every tint, 06 §3.3). */
+.lead {
+  max-inline-size: var(--layout-reading);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
+}
+
+@media (min-width: 40rem) {
+  .inner {
+    padding-inline: var(--space-6);
+  }
+
+  .title {
+    font-size: var(--text-hero-size);
+  }
+}
+
+/* Desktop: the copy in the left column, centred beside the sticker pile. */
+@media (min-width: 64rem) {
+  .inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr repeat(5, auto) 1fr;
+    grid-template-areas:
+      ". featured"
+      "eyebrow featured"
+      "title featured"
+      "lead featured"
+      "search featured"
+      "examples featured"
+      ". featured";
+    gap: var(--space-4) var(--space-8);
+    padding-block-start: var(--space-12);
+  }
+
+  .eyebrow {
+    grid-area: eyebrow;
+  }
+
+  .title {
+    grid-area: title;
+  }
+
+  .search {
+    grid-area: search;
+  }
+
+  .featured {
+    grid-area: featured;
+  }
+
+  .examples {
+    grid-area: examples;
+  }
+
+  /* Larger and in ink beside the stickers, where there is room. */
+  .lead {
+    grid-area: lead;
+    color: var(--color-text);
+    font-size: var(--text-title-size);
+    line-height: var(--text-body-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .eyebrow,
+  .accent {
+    transition: none;
+  }
+}

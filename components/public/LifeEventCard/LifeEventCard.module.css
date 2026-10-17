@@ -19,13 +19,12 @@
   font-weight: var(--text-heading-weight);
 }
 
+/* Durations are prose ("Oko nedelju dana"), so body text, not the data face. */
 .meta {
   color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-data-size);
-  line-height: var(--text-data-line);
-  font-weight: var(--text-data-weight);
-  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
+  font-weight: var(--text-body-sm-weight);
 }
 
 .chevron {

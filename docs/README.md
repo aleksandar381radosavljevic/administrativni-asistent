@@ -15,7 +15,7 @@ The Markdown (and SQL/YAML) files in `docs/` are the single source of truth for 
 | [07-ai-instructions.md](07-ai-instructions.md) | Instructions for coding agents; read first |
 | [08-screen-specifications.md](08-screen-specifications.md) | Every public and admin screen; UI copy of record |
 | [open-questions.md](open-questions.md) | All open questions with their current defaults |
-| [decisions/](decisions/) | ADRs 0001–0017 and 0019, binding (0018 is reserved for a pending content ADR) |
+| [decisions/](decisions/) | ADRs 0001–0017, 0019 and 0020, binding (0018 is reserved for a pending content ADR) |
 | [future/](future/) | Frozen mobile docs 09–11; not implementation input ([ADR 0002](decisions/0002-web-only-v1.md)) |
 
 SQL tests live in [`../supabase/tests/`](../supabase/tests/README.md).

@@ -20,7 +20,7 @@ describe("LifeEventView", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: lifeEventDetail.category.name }),
-    ).toHaveAttribute("href", "/?kategorija=preseljenje-i-adresa");
+    ).toHaveAttribute("href", "/#kategorija-preseljenje-i-adresa");
     expect(
       screen.getByRole("link", { name: "Otvori checklist" }),
     ).toHaveAttribute("href", "/dogadjaj/selim-se-na-novu-adresu/checklist");

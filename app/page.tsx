@@ -1,14 +1,22 @@
 import {
-  Card,
   EmptyState,
   Skeleton,
   SkeletonGroup,
 } from "@aleksandar381radosavljevic/osnova-react";
+import { connection } from "next/server";
 import { Suspense } from "react";
+import { AssistantPromo } from "@/components/public/AssistantPromo/AssistantPromo";
+import { ExampleLinks } from "@/components/public/ExampleLinks/ExampleLinks";
+import { FeaturedStickers } from "@/components/public/FeaturedStickers/FeaturedStickers";
+import { HomeHero } from "@/components/public/HomeHero/HomeHero";
 import { LifeEventCatalog } from "@/components/public/LifeEventCatalog/LifeEventCatalog";
-import { SearchField } from "@/components/public/SearchField/SearchField";
 import { TextLink } from "@/components/public/TextLink/TextLink";
-import { groupByCategory, selectedCategory } from "@/lib/domain/categories";
+import { TrustStrip } from "@/components/public/TrustStrip/TrustStrip";
+import {
+  exampleLifeEvents,
+  featuredLifeEvents,
+  groupByCategory,
+} from "@/lib/domain/categories";
 import { labels } from "@/lib/i18n/labels";
 import { listCategories } from "@/lib/services/categories";
 import { listLifeEvents } from "@/lib/services/life-events";
@@ -19,34 +27,56 @@ const SEARCH_INPUT_ID = "pretraga";
 // The API caps a page at 100; v1 has about 20 life events (00 §2).
 const ALL_LIFE_EVENTS = { limit: 100, offset: 0 } as const;
 
-// P1 Home (08 P1). The heading and search are the static shell; the catalog
-// streams in, because `?kategorija=` is only known at request time.
-export default function HomePage({ searchParams }: PageProps<"/">) {
+// P1 Home (08 P1, ADR 0020). The headline and search are the static shell;
+// everything built from the catalog streams in.
+export default function HomePage() {
   return (
     <div className={styles.page}>
-      <div className={styles.intro}>
-        <p className={styles.eyebrow}>{labels.home.eyebrow}</p>
-        <h1 className={styles.title}>{labels.home.title}</h1>
-        <p className={styles.lead}>{labels.home.intro}</p>
-        <SearchField id={SEARCH_INPUT_ID} />
-      </div>
+      <HomeHero
+        searchInputId={SEARCH_INPUT_ID}
+        examples={
+          <Suspense fallback={null}>
+            <Examples />
+          </Suspense>
+        }
+        featured={
+          <Suspense fallback={<FeaturedSkeleton />}>
+            <Featured />
+          </Suspense>
+        }
+      />
+      <TrustStrip />
       <Suspense fallback={<CatalogSkeleton />}>
-        <Catalog searchParams={searchParams} />
+        <Catalog />
       </Suspense>
+      <AssistantPromo />
     </div>
   );
 }
 
-async function Catalog({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
-  // Awaiting the request first keeps the reads out of the build-time
-  // prerender: the build must not need Supabase (04 §3.2).
-  const { kategorija } = await searchParams;
+// Waiting for the request keeps the reads out of the build-time prerender:
+// the build must not need Supabase (04 §3.2). Both reads are cached, so the
+// three sections below share them.
+async function loadGroups() {
+  await connection();
   const [categories, lifeEvents] = await Promise.all([
     listCategories(),
     listLifeEvents(ALL_LIFE_EVENTS),
   ]);
-  const groups = groupByCategory(categories.data, lifeEvents.data);
+  return groupByCategory(categories.data, lifeEvents.data);
+}
 
+async function Examples() {
+  return <ExampleLinks lifeEvents={exampleLifeEvents(await loadGroups())} />;
+}
+
+async function Featured() {
+  const featured = featuredLifeEvents(await loadGroups());
+  return featured.length > 0 ? <FeaturedStickers items={featured} /> : null;
+}
+
+async function Catalog() {
+  const groups = await loadGroups();
   if (groups.length === 0) {
     return (
       <EmptyState
@@ -57,37 +87,24 @@ async function Catalog({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       />
     );
   }
+  return <LifeEventCatalog groups={groups} />;
+}
 
+function FeaturedSkeleton() {
   return (
-    <>
-      <LifeEventCatalog
-        groups={groups}
-        selected={selectedCategory(groups, kategorija)}
-      />
-      <Card as="section" className={styles.help} aria-labelledby="pomoc">
-        <h2 id="pomoc" className={styles.helpTitle}>
-          {labels.home.notFoundTitle}
-        </h2>
-        <div className={styles.helpLinks}>
-          <TextLink href="/ai">{labels.layout.askAssistant}</TextLink>
-          <TextLink href={`#${SEARCH_INPUT_ID}`}>
-            {labels.home.searchLink}
-          </TextLink>
-        </div>
-      </Card>
-    </>
+    <SkeletonGroup label={labels.home.loading} className={styles.skeletonRow}>
+      {Array.from({ length: 2 }, (_, i) => (
+        <Skeleton key={i} shape="block" height="16rem" />
+      ))}
+    </SkeletonGroup>
   );
 }
 
 function CatalogSkeleton() {
   return (
     <SkeletonGroup label={labels.home.loading} className={styles.skeleton}>
-      <div className={styles.skeletonChips}>
-        <Skeleton shape="block" width="4rem" height="2.75rem" />
-        <Skeleton shape="block" width="7rem" height="2.75rem" />
-      </div>
-      {Array.from({ length: 4 }, (_, i) => (
-        <Skeleton key={i} shape="block" height="4rem" />
+      {Array.from({ length: 3 }, (_, i) => (
+        <Skeleton key={i} shape="block" height="8rem" />
       ))}
     </SkeletonGroup>
   );

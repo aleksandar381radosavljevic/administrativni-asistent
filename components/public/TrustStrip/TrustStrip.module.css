@@ -1,0 +1,52 @@
+.root {
+  position: relative;
+}
+
+/* Named for screen readers; the three promises speak for themselves on screen. */
+.heading {
+  composes: root from "../VisuallyHidden/VisuallyHidden.module.css";
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  margin: 0;
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex: 1 1 14rem;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.bubble {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--target-min);
+  block-size: var(--target-min);
+  border-radius: var(--radius-full);
+}
+
+.tone1 {
+  color: var(--color-category-2);
+  background-color: var(--color-category-2-soft);
+}
+
+.tone2 {
+  color: var(--color-category-3);
+  background-color: var(--color-category-3-soft);
+}
+
+.tone3 {
+  color: var(--color-category-4);
+  background-color: var(--color-category-4-soft);
+}
