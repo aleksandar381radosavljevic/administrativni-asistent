@@ -1,4 +1,5 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { groupByCategory } from "@/lib/domain/categories";
 import type { LifeEventSummary } from "@/lib/services/schemas";
@@ -28,42 +29,44 @@ const groups = groupByCategory([category, documents], [moving, passport]);
 
 describe("LifeEventCatalog", () => {
   it("lists every category with its life events, in category order", () => {
-    renderWithProviders(<LifeEventCatalog groups={groups} selected={null} />);
+    renderWithProviders(<LifeEventCatalog groups={groups} />);
 
     expect(
-      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+      screen.getByRole("heading", { level: 2, name: "Sve situacije" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent),
     ).toEqual([documents.name, category.name]);
+    expect(
+      screen.getByRole("heading", { level: 4, name: moving.title }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: moving.title })).toHaveAttribute(
       "href",
       "/dogadjaj/selim-se-na-novu-adresu",
     );
-    expect(screen.getByText("2 procedure · ~2 nedelje")).toBeInTheDocument();
-    expect(screen.getByText("1 procedura")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Prikazana 2 životna događaja",
-    );
   });
 
-  it("shows only the selected category and marks its chip", () => {
-    renderWithProviders(
-      <LifeEventCatalog groups={groups} selected={documents} />,
-    );
+  it("shows the duration and no procedure count", () => {
+    renderWithProviders(<LifeEventCatalog groups={groups} />);
 
-    expect(
-      screen.getByRole("link", { name: passport.title }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: moving.title }),
-    ).not.toBeInTheDocument();
-    const chips = screen.getByRole("list", { name: "Kategorije" });
-    expect(
-      screen.getByRole("link", { name: documents.name, current: true }),
-    ).toHaveAttribute("href", "/?kategorija=licni-dokumenti");
-    expect(chips).toContainElement(
-      screen.getByRole("link", { name: "Sve", current: false }),
-    );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Prikazan 1 životni događaj",
-    );
+    expect(screen.getByText("~2 nedelje")).toBeInTheDocument();
+    expect(screen.queryByText(/procedur/)).not.toBeInTheDocument();
+  });
+
+  it("links each area to its block, which takes focus", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LifeEventCatalog groups={groups} />);
+
+    const areas = within(screen.getByRole("navigation", { name: "Oblasti" }));
+    const link = areas.getByRole("link", { name: documents.name });
+    expect(link).toHaveAttribute("href", "#kategorija-licni-dokumenti");
+
+    const block = screen.getByRole("region", { name: documents.name });
+    expect(block).toHaveAttribute("id", "kategorija-licni-dokumenti");
+    // jsdom does not follow fragment links; the block must accept focus.
+    block.focus();
+    expect(block).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("link", { name: passport.title })).toHaveFocus();
   });
 });

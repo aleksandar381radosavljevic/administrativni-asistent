@@ -112,41 +112,50 @@ Errors go to Sentry with route and entity id as context; request bodies on `/ai/
 Entry point. Lists all public life events grouped by category, with search and a way to the AI assistant.
 
 ### Layout and components
-- Eyebrow text "Dobar dan" (`--text-eyebrow`, muted) and `h1` "Šta ti se dešava?".
-- Lead paragraph (muted, reading width) under the `h1`: "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koji je rok. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba." ([ADR 0019](decisions/0019-product-name.md))
-- SearchField ([06 §12.11](06-design-system.md)), submits to `/pretraga?q=`.
-- CategoryFilter: "Sve" + one chip per category that has at least one public life event, in `categories.sort_order`.
-- Per category: SectionLabel (`h2`) with the category name, then a list (`ul`) of LifeEventCards (EventIcon, title, "N procedure · {estimated_duration}", chevron).
-- Below the list: Card with "Ne nalaziš svoju situaciju?" and two links: "Pitaj asistenta" (`/ai`) and "Pretraži" (focuses the SearchField).
+Visual direction: [ADR 0020](decisions/0020-illustrated-visual-direction.md). Concept: https://claude.ai/artifact/A6rGiMYn7eHu6pD7eLd4yD.
+
+1. **Hero** (full width, HomeHero). A field in the tone of the active area (see Actions), with soft decorative circles and a wave into the page background.
+   - Eyebrow "Dobar dan" and `h1` "Šta ti se dešava?" in `--font-display` at `--text-hero-*`; the eyebrow and the word "dešava?" take the area's strong color.
+   - Lead paragraph (reading width): "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koliko traje. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba." ([ADR 0019](decisions/0019-product-name.md); "koliko traje" because no field holds a deadline.)
+   - SearchField ([06 §12.11](06-design-system.md)), submits to `/pretraga?q=`.
+   - "Na primer:" and links straight to up to 4 life events: the first ones in catalog order that are not featured.
+   - "Izdvojeno" (`h2`): up to 4 featured life events as tilted `IllustratedCard` stickers (`h3`), each with its illustration (EventArt) and `estimated_duration`. Featured = the first life event of each of the first four categories by `sort_order`, so the admin decides by ordering and nothing is named in code.
+2. **"Kako radimo"** (`h2`, visually hidden): three promises with icons: "Korak po korak. Šta, gde i kojim redom." / "Cena i trajanje. Za svaki postupak." / "Zvanični izvori. Uz link na svaki."
+3. **"Sve situacije"** (`h2`) with a `nav` "Oblasti": one link per category that has at least one public life event, in `categories.sort_order`, each jumping to its block (`#kategorija-{slug}`).
+   - Per category: a block tinted with the category's tone, `h3` with the category name, then a list (`ul`) of LifeEventCards (EventIcon, `h4` title, `estimated_duration`, chevron). No procedure count.
+   - A category's tone is its position in the list (`--color-category-1` … `-6`, repeating after six).
+4. **Assistant band**: `h2` "Zapelo ti je negde?", "Pitaj asistenta svojim rečima. Odgovara samo iz uputstava objavljenih ovde i uz odgovor pokaže iz kojih." and the button-link "Pitaj asistenta" (`/ai`).
 
 ### Data
 | Endpoint | When | Returns |
 |---|---|---|
-| `GET /categories` | Server render | Categories with `sort_order` |
-| `GET /life-events` | Server render | Public life events with `category`, `icon`, `slug`, `title`, `procedure_count`, `estimated_duration` |
+| `GET /categories` | Request time (cached) | Categories with `sort_order` |
+| `GET /life-events` | Request time (cached) | Public life events with `category`, `icon`, `slug`, `title`, `estimated_duration` |
 
 ### Actions
 | Action | Result |
 |---|---|
 | Submit search (≥ 2 characters after trim) | Navigate to `/pretraga?q={term}` |
 | Submit search (< 2 characters) | Input `error` "Upiši bar 2 slova." Nothing is sent |
-| Choose a category chip | Filters the list in place and sets `?kategorija={slug}` in the URL (shareable, works without JS as a link) |
-| Choose "Sve" | Removes the filter |
-| Open a LifeEventCard | Navigate to `/dogadjaj/[slug]` |
+| Hover or focus a sticker | The hero field and accent take that area's tone (CSS only); the sticker straightens and shows "Pokaži korake →" (visual only, `aria-hidden`). The duration is always visible, since touch has no hover |
+| Choose an area link | Scrolls to and focuses that category's block |
+| Open a sticker, example link or LifeEventCard | Navigate to `/dogadjaj/[slug]` |
 
 ### Rules and validation
-- Only public life events (§0.2). Categories with none are hidden, so a category is never empty.
-- `estimated_duration` is admin text ([ADR 0008](decisions/0008-extend-domain-model.md)); when empty, the meta shows only the procedure count.
+- Only public life events (§0.2). Categories with none are hidden, so a block is never empty.
+- `estimated_duration` is admin text ([ADR 0008](decisions/0008-extend-domain-model.md)); when empty, the card shows only the title.
+- The featured stickers and the "Na primer" links never repeat each other.
 
 ### States
-- **Loading:** Skeletons for 2 chips and 4 cards (streamed Suspense fallback).
-- **No public life events at all:** EmptyState (`clipboard-list`) "Još nema objavljenih životnih događaja." / "Radimo na sadržaju. U međuvremenu možeš da pitaš asistenta." + link "Pitaj asistenta".
-- **Unknown `?kategorija`:** treated as "Sve".
+- **Loading:** the headline and search render at once; the stickers, examples and catalog stream in with Skeleton fallbacks.
+- **No public life events at all:** no stickers or examples; in place of the catalog, EmptyState (`clipboard-list`) "Još nema objavljenih životnih događaja." / "Radimo na sadržaju. U međuvremenu možeš da pitaš asistenta." + link "Pitaj asistenta".
 - **Error:** §0.5.
 
 ### Accessibility and responsive
-- The selected chip has `aria-current="true"` (the chips are links, 06 §12.12); a polite live region says "Prikazano N životnih događaja".
-- From 640 px the cards form a 2-column grid; from 1024 px 3 columns. Chips wrap, never scroll hidden.
+- Heading outline: `h1` → `h2` Izdvojeno → `h3` sticker titles; `h2` Sve situacije → `h3` category → `h4` life event.
+- Text on a tinted field is `--color-text` or the area's strong color, both AA on every `-soft` (06 §3.3).
+- Under `prefers-reduced-motion` nothing moves or fades; only the colors, ring and shadow change.
+- Below 1024 px the stickers form one row that scrolls sideways; from 1024 px they sit beside the headline in a loose two-column pile. From 640 px the LifeEventCards in a block form 2 columns.
 
 ---
 
@@ -201,7 +210,7 @@ Search runs on submit, not on every keystroke: it keeps the page server-rendered
 Shows all procedures of one life event, grouped into phases by dependency, so the user sees what can be done now and in parallel and what waits for something else (PR-08, PR-09, PR-11).
 
 ### Layout and components
-- BackLink to the category view: "{Kategorija}" → `/?kategorija={slug}`.
+- BackLink to the category block on Home: "{Kategorija}" → `/#kategorija-{slug}`.
 - EventIcon (48 px), `h1` title, description (`--text-body`, muted).
 - MetaRow: `list-checks` "N procedure", `clock` "{estimated_duration}" (omitted if empty).
 - Button `primary` "Otvori checklist" (`iconStart="list-checks"`) → `/dogadjaj/[slug]/checklist`.

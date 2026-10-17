@@ -2,7 +2,8 @@
  * Project theme (06 §3.5): the values behind Osnova's semantic tokens. This
  * is the only file that defines colors; components read the semantic tokens,
  * never the --aa-* primitives. Typography, spacing, radius, shadow and motion
- * use Osnova's defaults, which already match 06 §4-§8.
+ * use Osnova's defaults, which already match 06 §4-§8, except the display
+ * font (a rounded system face, ADR 0020).
  *
  * Unlayered, so it wins over Osnova's `osnova` cascade layer whatever the
  * import order. Every color pair is checked for WCAG 2.2 AA in 06 §3.3.
@@ -29,6 +30,13 @@
   --aa-rust-strong: #9e3a33;
   --aa-rust-strong-hover: #86302a;
   --aa-rust-soft: #f7e2de;
+  --aa-sky: #5b8dc9;
+  --aa-sky-strong: #2f5f95;
+  --aa-sky-soft: #e1ecf7;
+  --aa-plum: #9a6bb0;
+  --aa-plum-strong: #6e4385;
+  --aa-plum-soft: #efe4f3;
+  --aa-rose: #d9675c;
 
   /* Osnova semantic tokens, overridden by this theme */
   --color-bg: var(--aa-cream);
@@ -54,6 +62,35 @@
   --color-danger-hover: var(--aa-rust-strong-hover);
   --color-danger-soft: var(--aa-rust-soft);
   --color-focus: var(--aa-amber-strong);
+  /*
+   * Category colors (Osnova 0.3, ADR 0020): a category takes the color of its
+   * position in categories.sort_order, so the admin decides by ordering and no
+   * category is named in code. Pairs are in 06 §3.3.
+   */
+  --color-category-1: var(--aa-amber-strong);
+  --color-category-1-soft: var(--aa-amber-soft);
+  --color-category-1-decorative: var(--aa-amber);
+  --color-category-2: var(--aa-sage-strong);
+  --color-category-2-soft: var(--aa-sage-soft);
+  --color-category-2-decorative: var(--aa-sage);
+  --color-category-3: var(--aa-honey-strong);
+  --color-category-3-soft: var(--aa-honey-soft);
+  --color-category-3-decorative: var(--aa-honey);
+  --color-category-4: var(--aa-sky-strong);
+  --color-category-4-soft: var(--aa-sky-soft);
+  --color-category-4-decorative: var(--aa-sky);
+  --color-category-5: var(--aa-plum-strong);
+  --color-category-5-soft: var(--aa-plum-soft);
+  --color-category-5-decorative: var(--aa-plum);
+  --color-category-6: var(--aa-rust-strong);
+  --color-category-6-soft: var(--aa-rust-soft);
+  --color-category-6-decorative: var(--aa-rose);
+
+  /* Headings: a rounded system face where the platform has one (ADR 0020). */
+  --font-display:
+    ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+
   /* Dialog backdrop (Osnova 0.2.0): the theme's ink, half transparent. */
   --color-scrim: rgb(43 38 34 / 0.5);
 

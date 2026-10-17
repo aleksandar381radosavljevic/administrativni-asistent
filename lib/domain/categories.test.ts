@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { groupByCategory, selectedCategory } from "./categories";
+import {
+  categoryTone,
+  exampleLifeEvents,
+  featuredLifeEvents,
+  groupByCategory,
+} from "./categories";
 
 const documents = { id: "c1", slug: "dokumenta", sort_order: 2 };
 const housing = { id: "c2", slug: "stanovanje", sort_order: 1 };
@@ -27,20 +32,61 @@ describe("groupByCategory", () => {
   });
 });
 
-describe("selectedCategory", () => {
-  const groups = groupByCategory([documents, housing], [passport, moving]);
+describe("categoryTone", () => {
+  it("follows the category position and repeats after six", () => {
+    expect([0, 1, 5, 6, 13].map(categoryTone)).toEqual([
+      "category-1",
+      "category-2",
+      "category-6",
+      "category-1",
+      "category-2",
+    ]);
+  });
+});
 
-  it("finds the category by slug", () => {
-    expect(selectedCategory(groups, "dokumenta")).toBe(documents);
+describe("featuredLifeEvents", () => {
+  const cats = Array.from({ length: 5 }, (_, i) => ({
+    id: `k${String(i)}`,
+    slug: `k${String(i)}`,
+    sort_order: i,
+  }));
+  const events = cats.flatMap((c) => [
+    { title: `${c.slug}-a`, category: { id: c.id } },
+    { title: `${c.slug}-b`, category: { id: c.id } },
+  ]);
+
+  it("takes the first life event of each of the first four categories", () => {
+    const featured = featuredLifeEvents(groupByCategory(cats, events));
+    expect(featured.map((f) => [f.lifeEvent.title, f.tone])).toEqual([
+      ["k0-a", "category-1"],
+      ["k1-a", "category-2"],
+      ["k2-a", "category-3"],
+      ["k3-a", "category-4"],
+    ]);
   });
 
-  it.each([
-    undefined,
-    "",
-    "nepostojeca",
-    "prazna",
-    ["dokumenta", "stanovanje"],
-  ])("treats %j as all categories", (param) => {
-    expect(selectedCategory(groups, param)).toBeNull();
+  it("returns fewer when there are fewer categories", () => {
+    const featured = featuredLifeEvents(groupByCategory([housing], [moving]));
+    expect(featured).toEqual([{ lifeEvent: moving, tone: "category-1" }]);
+  });
+});
+
+describe("exampleLifeEvents", () => {
+  it("takes the first life events that are not featured, in catalog order", () => {
+    const groups = groupByCategory(
+      [documents, housing],
+      [passport, moving, idCard],
+    );
+    // Featured: moving (housing) and passport (documents).
+    expect(exampleLifeEvents(groups)).toEqual([idCard]);
+  });
+
+  it("stops at four", () => {
+    const many = Array.from({ length: 6 }, (_, i) => ({
+      title: `e${String(i)}`,
+      category: { id: "c2" },
+    }));
+    const examples = exampleLifeEvents(groupByCategory([housing], many));
+    expect(examples.map((e) => e.title)).toEqual(["e1", "e2", "e3", "e4"]);
   });
 });

@@ -1,9 +1,9 @@
-import { CategoryFilter } from "@/components/public/CategoryFilter/CategoryFilter";
 import { LifeEventCard } from "@/components/public/LifeEventCard/LifeEventCard";
-import { SectionLabel } from "@/components/public/SectionLabel/SectionLabel";
-import { VisuallyHidden } from "@/components/public/VisuallyHidden/VisuallyHidden";
-import type { CategoryGroup } from "@/lib/domain/categories";
-import { pluralize } from "@/lib/i18n/format";
+import {
+  categorySectionId,
+  categoryTone,
+  type CategoryGroup,
+} from "@/lib/domain/categories";
 import { labels } from "@/lib/i18n/labels";
 import type { Category, LifeEventSummary } from "@/lib/services/schemas";
 import styles from "./LifeEventCatalog.module.css";
@@ -11,45 +11,62 @@ import styles from "./LifeEventCatalog.module.css";
 interface LifeEventCatalogProps {
   /** Every non-empty category with its life events, in display order. */
   groups: readonly CategoryGroup<Category, LifeEventSummary>[];
-  /** The `?kategorija=` filter; null shows every category. */
-  selected: Category | null;
 }
 
-/** Category chips and the life events grouped by category (08 P1). */
-export function LifeEventCatalog({ groups, selected }: LifeEventCatalogProps) {
-  const shown = selected
-    ? groups.filter((g) => g.category.id === selected.id)
-    : groups;
-  const count = shown.reduce((sum, g) => sum + g.lifeEvents.length, 0);
-
+/**
+ * Every life event, in a tinted block per category, with a row of area links
+ * that jump to the blocks (08 P1, ADR 0020). Links, not a filter: the whole
+ * catalog stays on the page and works without JavaScript.
+ */
+export function LifeEventCatalog({ groups }: LifeEventCatalogProps) {
   return (
-    <div className={styles.root}>
-      <CategoryFilter
-        categories={groups.map((g) => g.category)}
-        selectedSlug={selected?.slug ?? null}
-      />
-      {/* Announces the new count when a chip changes the filter. */}
-      <p role="status">
-        <VisuallyHidden>
-          {pluralize(labels.home.shownCount, count)}
-        </VisuallyHidden>
-      </p>
-      {shown.map(({ category, lifeEvents }) => (
+    <section aria-labelledby="sve-situacije" className={styles.root}>
+      <div className={styles.header}>
+        <h2 id="sve-situacije" className={styles.title}>
+          {labels.home.allEvents}
+        </h2>
+        <nav aria-label={labels.home.areas}>
+          <ul className={styles.areas} role="list">
+            {groups.map(({ category }, index) => (
+              <li key={category.id}>
+                <a
+                  href={`#${categorySectionId(category.slug)}`}
+                  className={`${styles.area} ${styles[categoryTone(index)]}`}
+                >
+                  <span className={styles.dot} aria-hidden="true" />
+                  {category.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+      {groups.map(({ category, lifeEvents }, index) => (
         <section
           key={category.id}
-          className={styles.group}
-          aria-labelledby={`kategorija-${category.slug}`}
+          id={categorySectionId(category.slug)}
+          // Focusable so the area link moves focus here, not only the view.
+          tabIndex={-1}
+          className={`${styles.group} ${styles[categoryTone(index)]}`}
+          aria-labelledby={`${categorySectionId(category.slug)}-naslov`}
         >
-          <SectionLabel id={`kategorija-${category.slug}`}>
+          <h3
+            id={`${categorySectionId(category.slug)}-naslov`}
+            className={styles.groupTitle}
+          >
             {category.name}
-          </SectionLabel>
+          </h3>
           <ul className={styles.list} role="list">
             {lifeEvents.map((lifeEvent) => (
-              <LifeEventCard key={lifeEvent.id} lifeEvent={lifeEvent} />
+              <LifeEventCard
+                key={lifeEvent.id}
+                lifeEvent={lifeEvent}
+                headingLevel={4}
+              />
             ))}
           </ul>
         </section>
       ))}
-    </div>
+    </section>
   );
 }

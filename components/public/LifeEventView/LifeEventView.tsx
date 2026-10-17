@@ -5,6 +5,7 @@ import { MetaRow, type MetaRowItem } from "@/components/public/MetaRow/MetaRow";
 import { PhaseIndicator } from "@/components/public/PhaseIndicator/PhaseIndicator";
 import { ProcedureCard } from "@/components/public/ProcedureCard/ProcedureCard";
 import { TextLink } from "@/components/public/TextLink/TextLink";
+import { categorySectionId } from "@/lib/domain/categories";
 import { findCurrentPhase, groupIntoPhases } from "@/lib/domain/phases";
 import { pluralize } from "@/lib/i18n/format";
 import { labels } from "@/lib/i18n/labels";
@@ -35,9 +36,7 @@ export function LifeEventView({ lifeEvent }: { lifeEvent: LifeEventDetail }) {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <BackLink
-          href={`/?kategorija=${encodeURIComponent(lifeEvent.category.slug)}`}
-        >
+        <BackLink href={`/#${categorySectionId(lifeEvent.category.slug)}`}>
           {lifeEvent.category.name}
         </BackLink>
         <div className={styles.titleRow}>

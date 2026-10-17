@@ -24,21 +24,40 @@ export const labels = {
   // P1 Home (08 P1).
   home: {
     eyebrow: "Dobar dan",
-    title: "Šta ti se dešava?",
+    // The headline, split so the last word can take the area color.
+    titleStart: "Šta ti se",
+    titleAccent: "dešava?",
     intro:
-      "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koji je rok. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba.",
-    categories: "Kategorije",
-    allCategories: "Sve",
-    shownCount: {
-      one: "Prikazan {count} životni događaj",
-      few: "Prikazana {count} životna događaja",
-      other: "Prikazano {count} životnih događaja",
-    },
+      "Plastično objašnjavamo papirologiju u Srbiji, korak po korak: šta ti treba, koliko košta i koliko traje. Kad zapne, pitaj pametnog pomoćnika: odgovara samo iz uputstava objavljenih ovde. Nismo državna služba.",
+    examples: "Na primer:",
+    featured: "Izdvojeno",
+    showSteps: "Pokaži korake",
+    trustTitle: "Kako radimo",
+    trust: [
+      {
+        icon: "list-checks",
+        title: "Korak po korak.",
+        text: "Šta, gde i kojim redom.",
+      },
+      {
+        icon: "banknote",
+        title: "Cena i trajanje.",
+        text: "Za svaki postupak.",
+      },
+      {
+        icon: "external-link",
+        title: "Zvanični izvori.",
+        text: "Uz link na svaki.",
+      },
+    ],
+    allEvents: "Sve situacije",
+    areas: "Oblasti",
+    assistantTitle: "Zapelo ti je negde?",
+    assistantText:
+      "Pitaj asistenta svojim rečima. Odgovara samo iz uputstava objavljenih ovde i uz odgovor pokaže iz kojih.",
     emptyTitle: "Još nema objavljenih životnih događaja.",
     emptyDescription:
       "Radimo na sadržaju. U međuvremenu možeš da pitaš asistenta.",
-    notFoundTitle: "Ne nalaziš svoju situaciju?",
-    searchLink: "Pretraži",
     loading: "Učitavam životne događaje…",
   },
   // P3 Life event (08 P3) and the shared cards (06 §12).

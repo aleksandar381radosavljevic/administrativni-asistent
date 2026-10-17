@@ -73,7 +73,14 @@ The mockup's palette is kept for surfaces and decoration. Every color that sits 
 | `--aa-honey-soft` | `#FCEFD2` | Background for attention accents (info/warning Banner, "U toku" and "Poštom" badges) |
 | `--aa-rust-strong` | `#9E3A33` | Error text and icons, invalid input border, destructive button fill (replaces v1.0 `rust` `#C0524A`, 3.71:1 on rust-soft) |
 | `--aa-rust-strong-hover` | `#86302A` | Hover/active of destructive fill |
-| `--aa-rust-soft` | `#F7E2DE` | Background for error Banner |
+| `--aa-rust-soft` | `#F7E2DE` | Background for error Banner; category 6 tint |
+| `--aa-sky` | `#5B8DC9` | Decorative only: illustrations (category 4) |
+| `--aa-sky-strong` | `#2F5F95` | Category 4 text and icons |
+| `--aa-sky-soft` | `#E1ECF7` | Category 4 tint |
+| `--aa-plum` | `#9A6BB0` | Decorative only: illustrations (category 5) |
+| `--aa-plum-strong` | `#6E4385` | Category 5 text and icons |
+| `--aa-plum-soft` | `#EFE4F3` | Category 5 tint |
+| `--aa-rose` | `#D9675C` | Decorative only: illustrations (category 6) |
 
 ### 3.2 Semantic tokens
 
@@ -104,6 +111,11 @@ Components use only these. Values are set in `theme.css` (§3.5).
 | `--color-danger-hover` | rust-strong-hover | Hover/active of destructive fill |
 | `--color-danger-soft` | rust-soft | Error Banner background |
 | `--color-focus` | amber-strong | Focus ring |
+| `--color-category-N` (1–6) | amber-, sage-, honey-, sky-, plum-, rust-strong | A category's text and icons: area links, block headings, the hero accent ([ADR 0020](decisions/0020-illustrated-visual-direction.md)) |
+| `--color-category-N-soft` | amber-, sage-, honey-, sky-, plum-, rust-soft | A category's tint: hero field, catalog block, sticker art |
+| `--color-category-N-decorative` | amber, sage, honey, sky, plum, rose | Illustration fills only; never text, never the only cue |
+
+A category takes the tone of its position in `categories.sort_order` (1 for the first, repeating after six), so the admin decides by ordering and no category is named in code.
 
 ### 3.3 Contrast table (WCAG 2.2 AA)
 
@@ -151,6 +163,42 @@ Thresholds: 4.5:1 for text (1.4.3), 3:1 for non-text UI components, graphical ob
 | `ink-muted` #6B6157 | `honey-soft` #FCEFD2 | 5.30 | 4.5:1 text | pass | Secondary text inside a warning Banner |
 | `ink-muted` #6B6157 | `rust-soft` #F7E2DE | 4.86 | 4.5:1 text | pass | Secondary text inside an error Banner |
 | `rust-strong` #9E3A33 | `paper` #FFFFFF | 6.76 | 3:1 non-text | pass | Invalid input border |
+| `amber-strong` #A04617 | `amber-soft` #FBE4D6 | 5.08 | 4.5:1 text | pass | Category 1: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `amber-soft` #FBE4D6 | 12.24 | 4.5:1 text | pass | Category 1: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `amber-soft` #FBE4D6 | 4.94 | 4.5:1 text | pass | Category 1: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `amber-soft` #FBE4D6 | 5.08 | 3:1 non-text | pass | Category 1: focus ring and button edge on the tint |
+| `amber-strong` #A04617 | `paper` #FFFFFF | 6.21 | 4.5:1 text | pass | Category 1 strong color on paper (Osnova rule) |
+| `amber-strong` #A04617 | `cream` #FBF6ED | 5.77 | 4.5:1 text | pass | Category 1 strong color on cream (Osnova rule) |
+| `sage-strong` #3F6B4E | `sage-soft` #E3EFE7 | 5.19 | 4.5:1 text | pass | Category 2: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `sage-soft` #E3EFE7 | 12.66 | 4.5:1 text | pass | Category 2: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `sage-soft` #E3EFE7 | 5.12 | 4.5:1 text | pass | Category 2: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `sage-soft` #E3EFE7 | 5.25 | 3:1 non-text | pass | Category 2: focus ring and button edge on the tint |
+| `sage-strong` #3F6B4E | `paper` #FFFFFF | 6.13 | 4.5:1 text | pass | Category 2 strong color on paper (Osnova rule) |
+| `sage-strong` #3F6B4E | `cream` #FBF6ED | 5.70 | 4.5:1 text | pass | Category 2 strong color on cream (Osnova rule) |
+| `honey-strong` #7A5A12 | `honey-soft` #FCEFD2 | 5.58 | 4.5:1 text | pass | Category 3: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `honey-soft` #FCEFD2 | 13.13 | 4.5:1 text | pass | Category 3: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `honey-soft` #FCEFD2 | 5.30 | 4.5:1 text | pass | Category 3: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `honey-soft` #FCEFD2 | 5.44 | 3:1 non-text | pass | Category 3: focus ring and button edge on the tint |
+| `honey-strong` #7A5A12 | `paper` #FFFFFF | 6.37 | 4.5:1 text | pass | Category 3 strong color on paper (Osnova rule) |
+| `honey-strong` #7A5A12 | `cream` #FBF6ED | 5.91 | 4.5:1 text | pass | Category 3 strong color on cream (Osnova rule) |
+| `sky-strong` #2F5F95 | `sky-soft` #E1ECF7 | 5.50 | 4.5:1 text | pass | Category 4: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `sky-soft` #E1ECF7 | 12.50 | 4.5:1 text | pass | Category 4: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `sky-soft` #E1ECF7 | 5.05 | 4.5:1 text | pass | Category 4: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `sky-soft` #E1ECF7 | 5.19 | 3:1 non-text | pass | Category 4: focus ring and button edge on the tint |
+| `sky-strong` #2F5F95 | `paper` #FFFFFF | 6.58 | 4.5:1 text | pass | Category 4 strong color on paper (Osnova rule) |
+| `sky-strong` #2F5F95 | `cream` #FBF6ED | 6.11 | 4.5:1 text | pass | Category 4 strong color on cream (Osnova rule) |
+| `plum-strong` #6E4385 | `plum-soft` #EFE4F3 | 6.08 | 4.5:1 text | pass | Category 5: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `plum-soft` #EFE4F3 | 12.16 | 4.5:1 text | pass | Category 5: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `plum-soft` #EFE4F3 | 4.91 | 4.5:1 text | pass | Category 5: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `plum-soft` #EFE4F3 | 5.04 | 3:1 non-text | pass | Category 5: focus ring and button edge on the tint |
+| `plum-strong` #6E4385 | `paper` #FFFFFF | 7.49 | 4.5:1 text | pass | Category 5 strong color on paper (Osnova rule) |
+| `plum-strong` #6E4385 | `cream` #FBF6ED | 6.96 | 4.5:1 text | pass | Category 5 strong color on cream (Osnova rule) |
+| `rust-strong` #9E3A33 | `rust-soft` #F7E2DE | 5.44 | 4.5:1 text | pass | Category 6: area link, block heading, hero accent and eyebrow, trust icon on its tint |
+| `ink` #2B2622 | `rust-soft` #F7E2DE | 12.04 | 4.5:1 text | pass | Category 6: text on its tinted hero field and block |
+| `ink-muted` #6B6157 | `rust-soft` #F7E2DE | 4.86 | 4.5:1 text | pass | Category 6: "Na primer:" label on the hero field |
+| `amber-strong` #A04617 | `rust-soft` #F7E2DE | 4.99 | 3:1 non-text | pass | Category 6: focus ring and button edge on the tint |
+| `rust-strong` #9E3A33 | `paper` #FFFFFF | 6.76 | 4.5:1 text | pass | Category 6 strong color on paper (Osnova rule) |
+| `rust-strong` #9E3A33 | `cream` #FBF6ED | 6.28 | 4.5:1 text | pass | Category 6 strong color on cream (Osnova rule) |
 
 Previous values, measured with the same script, for reference:
 
@@ -203,6 +251,13 @@ Previous values, measured with the same script, for reference:
   --aa-rust-strong: #9e3a33;
   --aa-rust-strong-hover: #86302a;
   --aa-rust-soft: #f7e2de;
+  --aa-sky: #5b8dc9;
+  --aa-sky-strong: #2f5f95;
+  --aa-sky-soft: #e1ecf7;
+  --aa-plum: #9a6bb0;
+  --aa-plum-strong: #6e4385;
+  --aa-plum-soft: #efe4f3;
+  --aa-rose: #d9675c;
 
   /* Osnova semantic tokens, overridden by this theme */
   --color-bg: var(--aa-cream);
@@ -228,6 +283,13 @@ Previous values, measured with the same script, for reference:
   --color-danger-hover: var(--aa-rust-strong-hover);
   --color-danger-soft: var(--aa-rust-soft);
   --color-focus: var(--aa-amber-strong);
+  /* Category N = position in categories.sort_order (Osnova 0.3, ADR 0020) */
+  --color-category-1: var(--aa-amber-strong);
+  --color-category-1-soft: var(--aa-amber-soft);
+  --color-category-1-decorative: var(--aa-amber);
+  /* … 2 sage, 3 honey, 4 sky, 5 plum, 6 rust-strong / rust-soft / rose */
+  --font-display: ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   --color-scrim: rgb(43 38 34 / 0.5); /* dialog backdrop, Osnova 0.2.0 */
 
   color-scheme: light;
@@ -253,6 +315,7 @@ System fonts only (Osnova rule; [ADR 0001](decisions/0001-apply-all-ai-instructi
 | Token | Value | Use |
 |---|---|---|
 | `--font-body` | `system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif` | All text, including headings |
+| `--font-display` | `ui-rounded, "SF Pro Rounded", ` + the body stack | Large headings: the Home headline, section and block titles, sticker titles ([ADR 0020](decisions/0020-illustrated-visual-direction.md)). A rounded system face where the platform has one (Apple); elsewhere the body font |
 | `--font-mono` | `ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace` | Data: prices, durations, dates, counts (keeps the mockup's "official numbers" feel) |
 
 Headings get their character from weight (700–800) and tight letter-spacing, which the system UI fonts support, instead of a separate display font. Data styles also set `font-variant-numeric: tabular-nums` so numbers align.
@@ -263,6 +326,7 @@ Sizes are in `rem` so text scales with the user's browser setting (1.4.4). The v
 
 | Token | Size | Line height | Weight | Font | Use |
 |---|---|---|---|---|---|
+| `--text-hero` | clamp(2.75rem, 5vw + 1rem, 6.75rem) | 0.95 | 900 | display | The Home `h1` only, tracking `-0.04em` (Osnova 0.3) |
 | `--text-display` | 1.75rem (28 px) | 1.2 | 800 | body | Page title (h1) |
 | `--text-title` | 1.375rem (22 px) | 1.25 | 800 | body | Section titles, smaller page titles (h2) |
 | `--text-heading` | 1.125rem (18 px) | 1.3 | 700 | body | Card titles, subheadings (h3) |
@@ -535,7 +599,7 @@ Icon tile for a life event: 40 px in lists, 48 px on the detail page; `--radius-
 
 Link card for a life event on Home, Search results and the institution page.
 
-- EventIcon (40 px) · title (`--text-heading`) + meta line (`--text-data`, `--color-text-muted`: "4 procedure · ~2 nedelje", from `procedure_count` and `life_events.estimated_duration`; the duration part is omitted when empty) · `chevron-right`.
+- EventIcon (40 px) · title (`--text-heading`, `h3` or `h4` by prop) + meta line (`--text-body-sm`, `--color-text-muted`): `life_events.estimated_duration` only, omitted when empty · `chevron-right`. No procedure count ([ADR 0020](decisions/0020-illustrated-visual-direction.md)): it read as admin data, and durations are prose, so not `--text-data`.
 - Card base, compact padding, min-height 64 px.
 
 ### 12.5 MetaRow
@@ -591,13 +655,17 @@ Organization details on the procedure and institution pages.
 
 Search form: `<form role="search">` with Osnova `Input` (`type="search"`, `iconStart="search"`, visually hidden label "Pretraži", placeholder "Npr. pasoš, prijava adrese, karton") and a submit Button ("Traži"; icon-only on narrow screens with `aria-label`). Submitting navigates to `/pretraga?q=…` (08). Works without JavaScript.
 
-### 12.12 CategoryFilter (was CategoryChip)
+### 12.12 Home pieces (replace CategoryFilter)
 
-Category filter on Home.
+[ADR 0020](decisions/0020-illustrated-visual-direction.md); layout in 08 P1. The category filter is gone: area links jump to blocks instead of hiding the rest of the catalog.
 
-- A list of links labelled "Kategorije", each setting `?kategorija=` (08 P1), so the filter works without JavaScript. Each chip: pill, `--text-caption` weight 700, min-height 44 px, padding `--space-2` / `--space-4`.
-- Default: `--color-surface` fill, `--color-text` label, 1 px `--color-border`. Selected: `--color-accent` fill, text-on-accent, plus `aria-current="true"` (`aria-pressed` is only valid on buttons; the state is not color-only: the selected chip also shows a `check` icon).
-- Wraps onto multiple lines instead of hiding a horizontal scroll without a scrollbar (hidden horizontal scroll hid categories from keyboard and mouse users).
+- **HomeHero:** full-bleed field in `--color-category-N-soft` of the active area, with `--color-surface` circles (decorative, translucent) and a wave into `--color-bg`. The active area comes from CSS `:has()` on the hovered or focused sticker's `data-tone`; default is category 1. Transitions `--duration-slow`, off under reduced motion.
+- **FeaturedStickers:** Osnova `IllustratedCard` `variant="sticker"`, fixed tilts (−6, 5, 4, −4), illustration from EventArt, meta = duration plus a decorative "Pokaži korake →" (`aria-hidden`, shown on hover or focus). One sideways-scrolling row below 1024 px; a two-column pile above.
+- **EventArt:** in-house SVG per life-event icon name (the same names as `lifeEventIcons`), filled only through tokens (`--color-category-N-decorative`, `--color-surface`, `--color-text`, `--color-border-subtle`); unknown names get the checklist art. Decorative, `aria-hidden`.
+- **ExampleLinks:** "Na primer:" and underlined `--color-text` links (ink, because it is AA on every tint), each at least 44 px high.
+- **TrustStrip:** `--color-surface` strip with three promises, each with an icon in a category tint; visually hidden `h2` "Kako radimo".
+- **LifeEventCatalog:** `nav` "Oblasti" of pill links (`--color-category-N` on `-soft`, `--text-caption` weight 700, min-height 44 px), then a `--radius-2xl` block per category in its tint, `tabIndex=-1` so the area link moves focus there.
+- **AssistantPromo:** `--color-category-3-soft` band, `--text-display` heading in `--font-display`, Osnova Button with `href` and `iconEnd="arrow-right"`, EventArt `message-circle`.
 
 ### 12.13 ProgressBar
 
@@ -708,7 +776,7 @@ Every screen in 08 is checked against this list; Playwright flows ([ADR 0009](de
 - Cost display follows `cost_type`; a missing amount is never shown as "Besplatno" (ADR 0008).
 - InstitutionCard gains address and organization kind (ADR 0008).
 - Toast replaced by Banner with live-region roles (auto-dismiss fails 2.2.1).
-- Category chips wrap instead of a horizontal scroll with a hidden scrollbar.
+- Category chips wrap instead of a horizontal scroll with a hidden scrollbar. (Later replaced by area links that jump to blocks, ADR 0020.)
 - Chat send button enlarged to 44 px; PII notice added to the composer (ADR 0007).
 - Mockup tab bar and bottom-sheet references removed (web only, ADR 0002).
 

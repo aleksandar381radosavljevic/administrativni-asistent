@@ -5,6 +5,7 @@ import type {
 import {
   Armchair,
   ArrowLeft,
+  ArrowRight,
   Baby,
   Banknote,
   Building2,
@@ -46,6 +47,7 @@ export const lifeEventIcons = {
 /** UI icons used by the public screens (06 §10.1). */
 const uiIcons = {
   "arrow-left": ArrowLeft,
+  "arrow-right": ArrowRight,
   banknote: Banknote,
   "chevron-right": ChevronRight,
   "circle-help": CircleHelp,

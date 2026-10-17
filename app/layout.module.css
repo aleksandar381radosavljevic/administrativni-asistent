@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   min-block-size: 100dvh;
+  /* Clips full-bleed sections (Home's hero) instead of scrolling sideways. */
+  overflow-x: clip;
 }
 
 .main {

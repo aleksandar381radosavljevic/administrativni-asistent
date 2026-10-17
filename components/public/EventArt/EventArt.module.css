@@ -1,0 +1,96 @@
+/* Fills and strokes come only from theme tokens, so a theme recolors the art. */
+.art {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.ink {
+  fill: var(--color-text);
+}
+
+.paper {
+  fill: var(--color-surface);
+}
+
+.line {
+  fill: var(--color-border-subtle);
+}
+
+.c1 {
+  fill: var(--color-category-1-decorative);
+}
+
+.c2 {
+  fill: var(--color-category-2-decorative);
+}
+
+.c3 {
+  fill: var(--color-category-3-decorative);
+}
+
+.c4 {
+  fill: var(--color-category-4-decorative);
+}
+
+.c5 {
+  fill: var(--color-category-5-decorative);
+}
+
+.c6 {
+  fill: var(--color-category-6-decorative);
+}
+
+.d1 {
+  fill: var(--color-category-1);
+}
+
+.d2 {
+  fill: var(--color-category-2);
+}
+
+.d4 {
+  fill: var(--color-category-4);
+}
+
+.d5 {
+  fill: var(--color-category-5);
+}
+
+.stroke {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sInk {
+  stroke: var(--color-text);
+}
+
+.sPaper {
+  stroke: var(--color-surface);
+}
+
+.sC1 {
+  stroke: var(--color-category-1-decorative);
+}
+
+.sC2 {
+  stroke: var(--color-category-2-decorative);
+}
+
+.sC3 {
+  stroke: var(--color-category-3-decorative);
+}
+
+.sC4 {
+  stroke: var(--color-category-4-decorative);
+}
+
+.sLine {
+  stroke: var(--color-border-subtle);
+}
+
+.dashed {
+  stroke-dasharray: 2 9;
+}
