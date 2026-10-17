@@ -22,8 +22,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@aleksandar381radosavljevic/osnova-react": "0.2.0",
-    "@aleksandar381radosavljevic/osnova-tokens": "0.2.0",
+    "@aleksandar381radosavljevic/osnova-react": "0.3.0",
+    "@aleksandar381radosavljevic/osnova-tokens": "0.3.0",
     "@anthropic-ai/sdk": "0.131.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",
