@@ -62,6 +62,22 @@ export function categoryTone(index: number): CategoryTone {
   return CATEGORY_TONES[index % CATEGORY_TONES.length] ?? "category-1";
 }
 
+/**
+ * The tone of one category outside Home (P3, P4): its position among the
+ * public categories in display order, the same position Home gives it.
+ * `categories` is the public list (RLS keeps only categories with a
+ * published life event, as Home's groups do).
+ */
+export function categoryToneOf(
+  categories: readonly CategoryLike[],
+  categoryId: string,
+): CategoryTone {
+  const index = [...categories]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .findIndex((c) => c.id === categoryId);
+  return categoryTone(Math.max(index, 0));
+}
+
 /** How many life events Home features at the top (ADR 0020). */
 export const FEATURED_COUNT = 4;
 

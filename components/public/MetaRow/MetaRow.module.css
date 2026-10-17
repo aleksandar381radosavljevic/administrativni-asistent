@@ -13,11 +13,10 @@
   align-items: center;
   gap: var(--space-2);
   color: var(--color-text);
-  font-family: var(--font-mono);
-  font-size: var(--text-data-size);
-  line-height: var(--text-data-line);
-  font-weight: var(--text-data-weight);
-  font-variant-numeric: tabular-nums;
+  /* Values are prose ("Do prvog rođendana deteta"), so the body face. */
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
+  font-weight: var(--text-label-weight);
 }
 
 .item dt {

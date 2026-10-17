@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   categoryTone,
+  categoryToneOf,
   exampleLifeEvents,
   featuredLifeEvents,
   groupByCategory,
@@ -88,5 +89,16 @@ describe("exampleLifeEvents", () => {
     }));
     const examples = exampleLifeEvents(groupByCategory([housing], many));
     expect(examples.map((e) => e.title)).toEqual(["e1", "e2", "e3", "e4"]);
+  });
+});
+
+describe("categoryToneOf", () => {
+  it("gives a category the tone of its position in display order", () => {
+    expect(categoryToneOf([documents, housing], "c1")).toBe("category-2");
+    expect(categoryToneOf([documents, housing], "c2")).toBe("category-1");
+  });
+
+  it("falls back to the first tone for an unknown category", () => {
+    expect(categoryToneOf([housing], "missing")).toBe("category-1");
   });
 });

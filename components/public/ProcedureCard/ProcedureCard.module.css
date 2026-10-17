@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .header {
@@ -29,12 +29,28 @@
   font-weight: var(--text-caption-weight);
 }
 
-.details {
+/* Where, how long, how much: one line each, icon first (icons are decorative). */
+.facts {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
+}
+
+.facts > li {
+  display: flex;
+  align-items: flex-start;
   gap: var(--space-2);
+}
+
+.factIcon {
+  flex-shrink: 0;
+  margin-block-start: 0.15em;
 }
 
 .badges {
@@ -44,14 +60,6 @@
   padding: 0;
   margin: 0;
   list-style: none;
-}
-
-.cost {
-  font-family: var(--font-mono);
-  font-size: var(--text-data-size);
-  line-height: var(--text-data-line);
-  font-weight: var(--text-data-weight);
-  font-variant-numeric: tabular-nums;
 }
 
 .status {

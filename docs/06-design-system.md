@@ -604,16 +604,17 @@ Link card for a life event on Home, Search results and the institution page.
 
 ### 12.5 MetaRow
 
-Summary strip on the life event page: items with an icon and `--text-data` text ("4 procedure", "~2 nedelje"). `--color-surface`, `--radius-lg`, padding `--space-3` / `--space-4`, gap `--space-4`, wraps on narrow screens. Rendered as a `<dl>` so each value has a term ("Broj procedura", "Okvirno trajanje", visually hidden).
+Summary strip on the life event page: items with an icon and `--text-body-sm` text at label weight ("4 procedure", "~2 nedelje", "Besplatno"); durations are prose, so not `--text-data`. `--color-surface`, `--radius-lg`, padding `--space-3` / `--space-4`, gap `--space-4`, wraps on narrow screens. Rendered as a `<dl>` so each value has a term ("Broj procedura", "Okvirno trajanje", "Cena", visually hidden).
 
 ### 12.6 PhaseIndicator (signature element)
 
 Shows order and dependency as a path of phases. Used on the life event page and the checklist.
 
 - Structure: an ordered list (`<ol>`) of phases; each phase is a list item with a heading and its cards.
-- Path line: 3 px, `--radius-full`, `--color-border-subtle`; the current phase uses `--color-accent-decorative` at 35% opacity (decorative only).
-- Marker: 24 px circle with the phase number in `--text-caption` weight 800. Current phase: `--color-accent` fill, text-on-accent (6.21:1). Other phases: `--color-surface-neutral` fill, `--color-text` (11.76:1). (v1.0 had white digits on clay-dark, ~1.5:1.)
-- Label: "Faza N" (`--text-caption` weight 800) and a subtitle (`--text-caption` weight 500, `--color-text-muted`):
+- Tone: `--color-accent` by default; a `tone` prop (`category-1` … `category-6`) switches to that category's color, as on the life event page.
+- Path line: one per phase, from under its marker down to the end of that phase's last card, so it shows which cards belong to the phase; the last phase has one too. 3 px, `--radius-full`, `--color-border-subtle`; the current phase uses the tone at 35% opacity (decorative only).
+- Marker: 36 px circle with the phase number in `--font-display`. Current phase: tone fill, text-on-accent. Other phases: the tone's soft fill with the tone as text (strong on soft passes AA, see the palette table). (v1.0 had white digits on clay-dark, ~1.5:1.)
+- Label: "Faza N" (`--font-display`, `--text-title`) and a subtitle (weight 500, `--color-text-muted`):
   - Phase 1: "možeš odmah, paralelno"
   - Phase N > 1: "posle procedura od kojih zavise"
 
@@ -625,7 +626,9 @@ Shows order and dependency as a path of phases. Used on the life event page and 
 
 Link card for a procedure inside a life event.
 
-- Title (`--text-heading`) · meta line: organization name (`--text-caption`, `--color-text-muted`) · method Badges ("Online" success, "Lično" accent, "Poštom" attention) · cost (`--text-data`, right-aligned on wide screens, wraps under on narrow).
+- Title (`--text-heading`) and `chevron-right`.
+- Facts, a list with icons (`--text-body-sm`, `--color-text-muted`): `building-2` organization names, `clock` `processing_time` (omitted if empty), `banknote` cost.
+- Method Badges ("Online" success, "Lično" accent, "Poštom" attention).
 - If the procedure has dependencies: a line "Zavisi od: {naslov}, {naslov}" (`--text-caption`, `--color-text-muted`).
 - If stale: a `warning` Badge "Proveri podatke".
 - Cost text follows `procedures.cost_type`: `free` → "Besplatno"; `fixed` → formatted amount, e.g. "1.500 din" (`cost_amount` arrives as a decimal string and is formatted with `Intl.NumberFormat('sr-Latn-RS')`, never parsed into a float for arithmetic); `variable` → "Cena varira"; `unknown` → "Cena nepoznata". Never "Besplatno" for a missing amount ([ADR 0008](decisions/0008-extend-domain-model.md)).
