@@ -6,7 +6,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LifeEventView } from "@/components/public/LifeEventView/LifeEventView";
+import { categoryToneOf } from "@/lib/domain/categories";
 import { labels } from "@/lib/i18n/labels";
+import { listCategories } from "@/lib/services/categories";
 import { getLifeEventBySlug } from "@/lib/services/life-events";
 import styles from "./page.module.css";
 
@@ -30,9 +32,19 @@ export default function LifeEventPage({ params }: Props) {
 }
 
 async function LifeEventContent({ params }: Pick<Props, "params">) {
-  const lifeEvent = await getLifeEventBySlug((await params).slug);
+  const { slug } = await params;
+  // Both reads are cached; the categories give the area its Home color.
+  const [lifeEvent, categories] = await Promise.all([
+    getLifeEventBySlug(slug),
+    listCategories(),
+  ]);
   if (lifeEvent === null) notFound();
-  return <LifeEventView lifeEvent={lifeEvent} />;
+  return (
+    <LifeEventView
+      lifeEvent={lifeEvent}
+      tone={categoryToneOf(categories.data, lifeEvent.category.id)}
+    />
+  );
 }
 
 function LifeEventSkeleton() {

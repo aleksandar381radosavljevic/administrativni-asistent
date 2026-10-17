@@ -13,7 +13,9 @@ function phase(name: RegExp) {
 
 describe("LifeEventView", () => {
   it("shows the event with a link back to its category and to the checklist", () => {
-    renderWithProviders(<LifeEventView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <LifeEventView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     expect(
       screen.getByRole("heading", { level: 1, name: lifeEventDetail.title }),
@@ -21,15 +23,50 @@ describe("LifeEventView", () => {
     expect(
       screen.getByRole("link", { name: lifeEventDetail.category.name }),
     ).toHaveAttribute("href", "/#kategorija-preseljenje-i-adresa");
-    expect(
-      screen.getByRole("link", { name: "Otvori checklist" }),
-    ).toHaveAttribute("href", "/dogadjaj/selim-se-na-novu-adresu/checklist");
+    const checklistLinks = screen.getAllByRole("link", {
+      name: "Otvori checklist",
+    });
+    expect(checklistLinks).not.toHaveLength(0);
+    for (const link of checklistLinks) {
+      expect(link).toHaveAttribute(
+        "href",
+        "/dogadjaj/selim-se-na-novu-adresu/checklist",
+      );
+    }
     expect(screen.getByText("2 procedure")).toBeInTheDocument();
     expect(screen.getByText("~2 nedelje")).toBeInTheDocument();
   });
 
+  it("says the event is free only when every procedure is free", () => {
+    const { unmount } = renderWithProviders(
+      <LifeEventView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
+    const header = screen.getByRole("banner");
+    expect(within(header).queryByText("Besplatno")).not.toBeInTheDocument();
+    unmount();
+
+    renderWithProviders(
+      <LifeEventView
+        lifeEvent={{
+          ...lifeEventDetail,
+          procedures: lifeEventDetail.procedures.map((p) => ({
+            ...p,
+            cost_type: "free" as const,
+            cost_amount: null,
+          })),
+        }}
+        tone="category-2"
+      />,
+    );
+    expect(
+      within(screen.getByRole("banner")).getByText("Besplatno"),
+    ).toBeInTheDocument();
+  });
+
   it("puts a procedure after the one it depends on, in a later phase", () => {
-    renderWithProviders(<LifeEventView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <LifeEventView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     const first = phase(/Faza 1, možeš odmah, paralelno/);
     const second = phase(/Faza 2, posle procedura od kojih zavise/);
@@ -48,7 +85,9 @@ describe("LifeEventView", () => {
   });
 
   it("shows methods, cost and the stale warning on the cards", () => {
-    renderWithProviders(<LifeEventView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <LifeEventView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     const first = phase(/Faza 1/);
     const second = phase(/Faza 2/);
@@ -57,13 +96,20 @@ describe("LifeEventView", () => {
     expect(
       within(first).queryByText("Proveri podatke"),
     ).not.toBeInTheDocument();
+    expect(within(first).getByText("1 dan")).toBeInTheDocument();
+    expect(within(first).getByText("[TEST] MUP")).toBeInTheDocument();
     expect(within(second).getByText("1.500 din")).toBeInTheDocument();
     expect(within(second).getByText("Proveri podatke")).toBeInTheDocument();
   });
 
   it("shows the user's checklist status, also when another tab changes it", () => {
-    renderWithProviders(<LifeEventView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <LifeEventView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
     expect(screen.queryByText("Završeno")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "0 / 2 završeno" }),
+    ).toBeInTheDocument();
 
     window.localStorage.setItem(
       CHECKLIST_KEY,
@@ -82,6 +128,9 @@ describe("LifeEventView", () => {
     });
 
     expect(within(phase(/Faza 1/)).getByText("Završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "1 / 2 završeno" }),
+    ).toBeInTheDocument();
     expect(
       within(phase(/Faza 2/)).queryByText("Završeno"),
     ).not.toBeInTheDocument();

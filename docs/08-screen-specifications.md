@@ -210,12 +210,16 @@ Search runs on submit, not on every keystroke: it keeps the page server-rendered
 Shows all procedures of one life event, grouped into phases by dependency, so the user sees what can be done now and in parallel and what waits for something else (PR-08, PR-09, PR-11).
 
 ### Layout and components
-- BackLink to the category block on Home: "{Kategorija}" → `/#kategorija-{slug}`.
-- EventIcon (48 px), `h1` title, description (`--text-body`, muted).
-- MetaRow: `list-checks` "N procedure", `clock` "{estimated_duration}" (omitted if empty).
-- Button `primary` "Otvori checklist" (`iconStart="list-checks"`) → `/dogadjaj/[slug]/checklist`.
-- PhaseIndicator: phases ([06 §12.6](06-design-system.md)), each with ProcedureCards in `life_event_procedures.sort_order` within the phase. Each card shows organization, methods, cost, "Zavisi od: …" if it has dependencies, and the stale Badge.
-- Under the list: Card "Imaš pitanje o ovome?" + link "Pitaj asistenta".
+The page takes its category's tone, the same one Home gives the category (position in display order, [ADR 0020](decisions/0020-illustrated-visual-direction.md)), so the user recognizes the area they came from.
+- Hero, a full-bleed field in the category's soft tint:
+  - BackLink to the category block on Home: "{Kategorija}" → `/#kategorija-{slug}`.
+  - `h1` title (`--font-display`), description.
+  - MetaRow: `list-checks` "N procedure", `clock` "{estimated_duration}" (omitted if empty), `banknote` "Besplatno" only when every listed procedure is free (no total for paid ones: amounts can be variable or unknown).
+  - Button `primary` `lg` "Otvori checklist" (`iconStart="list-checks"`) → `/dogadjaj/[slug]/checklist`.
+  - From 1024 px: the life event's illustration (EventArt) in a tilted sticker frame on the right; hidden on phones so the phases start sooner.
+- Section "Tvoj napredak" (`h2`): ProgressBar "{done} / {total} završeno" from this browser's checklist (0 before hydration) and the link "Otvori checklist". On phones only the bar shows, under the hero (heading and link hidden; the hero button already opens the checklist).
+- PhaseIndicator in the category's tone ([06 §12.6](06-design-system.md)), each phase with ProcedureCards ([06 §12.7](06-design-system.md)) in `life_event_procedures.sort_order` within the phase.
+- At the end: the assistant band from Home ("Zapelo ti je negde?" + "Pitaj asistenta" → `/ai`).
 
 ### Data
 | Endpoint | Returns |
@@ -242,7 +246,7 @@ Phase computation is a pure function in the app (unit-tested, [ADR 0009](decisio
 
 ### Accessibility and responsive
 - Phases are an `ol`; each phase heading (`h2`) reads "Faza 1, možeš odmah, paralelno".
-- From 1024 px: two columns, phases on the left, an aside with MetaRow, the checklist button and the assistant card on the right (sticky).
+- From 1024 px: two columns, phases on the left and "Tvoj napredak" on the right (sticky, 20 rem).
 
 ---
 

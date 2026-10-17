@@ -40,19 +40,31 @@ export function ProcedureCard({
         </h3>
         <Icon name="chevron-right" className={styles.chevron} />
       </div>
-      {institutions && <p className={styles.caption}>{institutions}</p>}
-      <div className={styles.details}>
-        <ul className={styles.badges} role="list">
-          {procedureMethods(procedure).map((method) => (
-            <li key={method}>
-              <Badge tone={methodTone[method]}>{labels.methods[method]}</Badge>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.cost}>
+      <ul className={styles.facts} role="list">
+        {institutions && (
+          <li>
+            <Icon name="building-2" size={16} className={styles.factIcon} />
+            {institutions}
+          </li>
+        )}
+        {procedure.processing_time && (
+          <li>
+            <Icon name="clock" size={16} className={styles.factIcon} />
+            {procedure.processing_time}
+          </li>
+        )}
+        <li>
+          <Icon name="banknote" size={16} className={styles.factIcon} />
           {formatCost(procedure.cost_type, procedure.cost_amount)}
-        </p>
-      </div>
+        </li>
+      </ul>
+      <ul className={styles.badges} role="list">
+        {procedureMethods(procedure).map((method) => (
+          <li key={method}>
+            <Badge tone={methodTone[method]}>{labels.methods[method]}</Badge>
+          </li>
+        ))}
+      </ul>
       {dependsOn.length > 0 && (
         <p className={styles.caption}>
           {format(labels.lifeEvent.dependsOn, { titles: dependsOn.join(", ") })}

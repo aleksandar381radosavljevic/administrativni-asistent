@@ -1,54 +1,121 @@
+/* The category's tone (ADR 0020): strong on soft is AA for every area (06 §3.3). */
+.category-1 {
+  --event-tone: var(--color-category-1);
+  --event-tint: var(--color-category-1-soft);
+}
+
+.category-2 {
+  --event-tone: var(--color-category-2);
+  --event-tint: var(--color-category-2-soft);
+}
+
+.category-3 {
+  --event-tone: var(--color-category-3);
+  --event-tint: var(--color-category-3-soft);
+}
+
+.category-4 {
+  --event-tone: var(--color-category-4);
+  --event-tint: var(--color-category-4-soft);
+}
+
+.category-5 {
+  --event-tone: var(--color-category-5);
+  --event-tint: var(--color-category-5-soft);
+}
+
+.category-6 {
+  --event-tone: var(--color-category-6);
+  --event-tint: var(--color-category-6-soft);
+}
+
 .root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* Full-bleed tinted header, like Home's hero (the body clips the overflow). */
+.hero {
+  margin-inline: calc(50% - 50vw);
+  margin-block-start: calc(var(--space-6) * -1);
+  background-color: var(--event-tint);
+}
+
+.heroInner {
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+  max-inline-size: var(--layout-container);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.title {
+  max-inline-size: 16ch;
+  font-family: var(--font-display);
+  font-size: max(
+    calc(var(--text-display-size) * 1.35),
+    calc(var(--text-hero-size) * 0.6)
+  );
+  line-height: 1;
+  font-weight: var(--text-hero-weight);
+  letter-spacing: -0.03em;
+}
+
+.description {
+  max-inline-size: var(--layout-reading);
+}
+
+.cta {
+  margin-block-start: var(--space-2);
+}
+
+/* The illustration in a sticker frame, tilted like Home's stickers. */
+.art {
+  display: none;
+}
+
+.body {
   display: grid;
   grid-template-areas:
-    "header"
-    "aside"
+    "progress"
     "phases";
   gap: var(--space-6);
 }
 
-.header {
-  grid-area: header;
+.progress {
+  grid-area: progress;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-3);
-  max-inline-size: var(--layout-reading);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.progress > :not(.progressLink) {
+  align-self: stretch;
 }
 
-.title {
-  font-size: var(--text-display-size);
-  line-height: var(--text-display-line);
-  font-weight: var(--text-display-weight);
+/* On a phone the hero already has the checklist button: only the bar shows. */
+.progressTitle,
+.progressLink {
+  display: none;
 }
 
-.description {
-  color: var(--color-text-muted);
-}
-
-.aside {
-  grid-area: aside;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.checklistButton {
-  align-self: flex-start;
-}
-
-.question {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.questionTitle {
+.progressTitle {
+  font-family: var(--font-display);
   font-size: var(--text-heading-size);
   line-height: var(--text-heading-line);
   font-weight: var(--text-heading-weight);
@@ -68,17 +135,52 @@
   list-style: none;
 }
 
+@media (min-width: 40rem) {
+  .heroInner {
+    padding-inline: var(--space-6);
+  }
+}
+
 @media (min-width: 64rem) {
-  .root {
+  .heroInner {
     grid-template-columns: minmax(0, 1fr) 20rem;
-    grid-template-areas:
-      "header header"
-      "phases aside";
-    align-items: start;
+    gap: var(--space-12);
+    padding-block: var(--space-8) var(--space-12);
   }
 
-  .aside {
+  .art {
+    display: block;
+    padding: var(--space-3);
+    border-radius: var(--radius-2xl);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+    transform: rotate(3deg);
+  }
+
+  .art > svg {
+    border-radius: var(--radius-xl);
+    background-color: var(--event-tint);
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-areas: "phases progress";
+    align-items: start;
+    gap: var(--space-12);
+  }
+
+  .progress {
     position: sticky;
     inset-block-start: var(--space-6);
+  }
+
+  .progressTitle,
+  .progressLink {
+    display: revert;
+  }
+
+  .description {
+    font-size: var(--text-title-size);
+    line-height: var(--text-body-line);
   }
 }

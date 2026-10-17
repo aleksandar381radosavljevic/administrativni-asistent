@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { CategoryTone } from "@/lib/domain/categories";
 import { VisuallyHidden } from "@/components/public/VisuallyHidden/VisuallyHidden";
 import { format } from "@/lib/i18n/format";
 import { labels } from "@/lib/i18n/labels";
@@ -15,6 +16,8 @@ interface PhaseIndicatorProps {
   /** The lowest phase with work left (06 §12.6); null when everything is done. */
   currentPhase: number | null;
   "aria-label"?: string;
+  /** Colors the markers with a category's tone (P3); the accent otherwise. */
+  tone?: CategoryTone;
 }
 
 /**
@@ -25,9 +28,11 @@ export function PhaseIndicator({
   phases,
   currentPhase,
   "aria-label": ariaLabel,
+  tone,
 }: PhaseIndicatorProps) {
+  const className = tone ? `${styles.root} ${styles[tone]}` : styles.root;
   return (
-    <ol className={styles.root} role="list" aria-label={ariaLabel}>
+    <ol className={className} role="list" aria-label={ariaLabel}>
       {phases.map((phase) => (
         <li
           key={phase.number}
