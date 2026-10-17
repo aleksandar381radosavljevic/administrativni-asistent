@@ -155,7 +155,7 @@ Visual direction: [ADR 0020](decisions/0020-illustrated-visual-direction.md). Co
 - Heading outline: `h1` → `h2` Izdvojeno → `h3` sticker titles; `h2` Sve situacije → `h3` category → `h4` life event.
 - Text on a tinted field is `--color-text` or the area's strong color, both AA on every `-soft` (06 §3.3).
 - Under `prefers-reduced-motion` nothing moves or fades; only the colors, ring and shadow change.
-- Below 1024 px the stickers form one row that scrolls sideways; from 1024 px they sit beside the headline in a loose two-column pile. From 640 px the LifeEventCards in a block form 2 columns.
+- Below 1024 px the order is headline, search, stickers, lead, "Na primer" (source order too, so the stickers show without scrolling), the `h1` is one step larger ("dešava?" always on its own line) and the lead is `--text-body-sm` in `--color-text-muted`; from 1024 px a grid puts the lead and examples back in the left column beside the stickers. Below 1024 px the stickers form one row that scrolls sideways with snap points, with the next sticker half visible as the cue; from 1024 px they sit beside the headline in a loose two-column pile. From 640 px the LifeEventCards in a block form 2 columns.
 
 ---
 

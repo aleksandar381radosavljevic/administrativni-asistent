@@ -32,18 +32,23 @@ export function HomeHero({ searchInputId, examples, featured }: HomeHeroProps) {
         <circle cx="1130" cy="470" r="240" className={styles.glowSmall} />
         <circle cx="120" cy="110" r="90" className={styles.glowLarge} />
       </svg>
+      {/*
+        Source order is the phone order: the stickers come right after the
+        search so they show without scrolling; the lead and the examples
+        follow. From 1024 px a grid puts them back beside the stickers.
+      */}
       <div className={styles.inner}>
-        <div className={styles.copy}>
-          <p className={styles.eyebrow}>{labels.home.eyebrow}</p>
-          <h1 className={styles.title}>
-            {labels.home.titleStart}{" "}
-            <span className={styles.accent}>{labels.home.titleAccent}</span>
-          </h1>
-          <p className={styles.lead}>{labels.home.intro}</p>
+        <p className={styles.eyebrow}>{labels.home.eyebrow}</p>
+        <h1 className={styles.title}>
+          {labels.home.titleStart}{" "}
+          <span className={styles.accent}>{labels.home.titleAccent}</span>
+        </h1>
+        <div className={styles.search}>
           <SearchField id={searchInputId} />
-          {examples}
         </div>
-        {featured}
+        <div className={styles.featured}>{featured}</div>
+        <p className={styles.lead}>{labels.home.intro}</p>
+        <div className={styles.examples}>{examples}</div>
       </div>
       <svg
         className={styles.wave}

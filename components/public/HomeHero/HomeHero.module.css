@@ -73,17 +73,15 @@
 
 .inner {
   position: relative;
-  display: grid;
-  gap: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
   max-inline-size: var(--layout-container);
   margin-inline: auto;
   padding: var(--space-8) var(--space-4) calc(var(--space-12) * 2);
 }
 
-.copy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.featured {
   min-inline-size: 0;
 }
 
@@ -103,31 +101,78 @@
 
 .title {
   font-family: var(--font-display);
-  font-size: var(--text-hero-size);
+  /* On a phone the hero step is at its minimum; one step up fills two lines. */
+  font-size: calc(var(--text-hero-size) * 1.3);
   line-height: var(--text-hero-line);
   font-weight: var(--text-hero-weight);
   letter-spacing: var(--text-hero-tracking);
 }
 
+/* "dešava?" on its own line, at every width. */
+.accent {
+  display: block;
+}
+
+/* Quieter on a phone, below the stickers (muted is AA on every tint, 06 §3.3). */
 .lead {
   max-inline-size: var(--layout-reading);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-line);
 }
 
 @media (min-width: 40rem) {
   .inner {
     padding-inline: var(--space-6);
   }
+
+  .title {
+    font-size: var(--text-hero-size);
+  }
 }
 
+/* Desktop: the copy in the left column, centred beside the sticker pile. */
 @media (min-width: 64rem) {
   .inner {
+    display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    align-items: center;
+    grid-template-rows: 1fr repeat(5, auto) 1fr;
+    grid-template-areas:
+      ". featured"
+      "eyebrow featured"
+      "title featured"
+      "lead featured"
+      "search featured"
+      "examples featured"
+      ". featured";
+    gap: var(--space-4) var(--space-8);
     padding-block-start: var(--space-12);
   }
 
-  /* Larger only beside the stickers; on a phone it would push them down. */
+  .eyebrow {
+    grid-area: eyebrow;
+  }
+
+  .title {
+    grid-area: title;
+  }
+
+  .search {
+    grid-area: search;
+  }
+
+  .featured {
+    grid-area: featured;
+  }
+
+  .examples {
+    grid-area: examples;
+  }
+
+  /* Larger and in ink beside the stickers, where there is room. */
   .lead {
+    grid-area: lead;
+    color: var(--color-text);
     font-size: var(--text-title-size);
     line-height: var(--text-body-line);
   }
