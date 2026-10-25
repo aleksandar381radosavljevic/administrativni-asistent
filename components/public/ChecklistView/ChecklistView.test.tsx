@@ -27,7 +27,9 @@ function statusGroup(title: string) {
 
 describe("ChecklistView", () => {
   it("starts with nothing done and the order dependency shown", () => {
-    renderWithProviders(<ChecklistView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <ChecklistView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     expect(
       screen.getByRole("heading", {
@@ -35,7 +37,9 @@ describe("ChecklistView", () => {
         name: `Checklist: ${lifeEventDetail.title}`,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("0 / 2 završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "0 / 2 završeno" }),
+    ).toBeInTheDocument();
     expect(
       within(statusGroup(registration.title)).getByRole("radio", {
         name: "Nije počelo",
@@ -49,11 +53,20 @@ describe("ChecklistView", () => {
     expect(
       screen.getByText(/Napredak se čuva lokalno u ovom pretraživaču/),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: `Sledeće: ${registration.title}` }),
+    ).toHaveAttribute("href", `#korak-${registration.slug}`);
+    expect(card(registration.title)).toHaveAttribute(
+      "id",
+      `korak-${registration.slug}`,
+    );
   });
 
   it("saves a status, updates the progress and unblocks dependents", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ChecklistView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <ChecklistView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     await user.click(
       within(statusGroup(registration.title)).getByRole("radio", {
@@ -61,7 +74,9 @@ describe("ChecklistView", () => {
       }),
     );
 
-    expect(screen.getByText("1 / 2 završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "1 / 2 završeno" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       `${registration.title}: Završeno. 1 / 2 završeno.`,
     );
@@ -77,7 +92,9 @@ describe("ChecklistView", () => {
 
   it("lets the user start a blocked procedure but warns about the order", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ChecklistView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <ChecklistView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
 
     await user.click(
       within(statusGroup(idCard.title)).getByRole("radio", { name: "U toku" }),
@@ -93,9 +110,31 @@ describe("ChecklistView", () => {
     ).toBeInTheDocument();
   });
 
+  it("points to the next step, and says so when everything is done", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <ChecklistView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
+
+    for (const { title } of [registration, idCard]) {
+      await user.click(
+        within(statusGroup(title)).getByRole("radio", { name: "Završeno" }),
+      );
+    }
+
+    expect(
+      screen.getByText("Sve je završeno. Svaka čast!"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /^Sledeće/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("resets this event's procedures only after confirmation", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<ChecklistView lifeEvent={lifeEventDetail} />);
+    renderWithProviders(
+      <ChecklistView lifeEvent={lifeEventDetail} tone="category-2" />,
+    );
     window.localStorage.setItem(
       CHECKLIST_KEY,
       JSON.stringify({
@@ -115,12 +154,16 @@ describe("ChecklistView", () => {
     act(() => {
       window.dispatchEvent(new StorageEvent("storage", { key: CHECKLIST_KEY }));
     });
-    expect(screen.getByText("1 / 2 završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "1 / 2 završeno" }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Poništi napredak" }));
     const dialog = screen.getByRole("dialog", { name: "Poništi napredak" });
     await user.click(within(dialog).getByRole("button", { name: "Odustani" }));
-    expect(screen.getByText("1 / 2 završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "1 / 2 završeno" }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Poništi napredak" }));
     await user.click(
@@ -129,7 +172,9 @@ describe("ChecklistView", () => {
       }),
     );
 
-    expect(screen.getByText("0 / 2 završeno")).toBeInTheDocument();
+    expect(
+      screen.getByRole("progressbar", { name: "0 / 2 završeno" }),
+    ).toBeInTheDocument();
     expect(
       JSON.parse(window.localStorage.getItem(CHECKLIST_KEY)!).items,
     ).toHaveProperty("other-event-procedure");

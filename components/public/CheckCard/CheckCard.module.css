@@ -15,6 +15,12 @@
   box-shadow: none;
 }
 
+/* Done: a calm success tint, so finished work recedes but stays readable. */
+.root[data-status="done"] {
+  background: var(--color-success-soft);
+  box-shadow: none;
+}
+
 .main {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -64,8 +70,8 @@
 }
 
 .title {
-  font-size: var(--text-body-size);
-  line-height: var(--text-body-line);
+  font-size: var(--text-heading-size);
+  line-height: var(--text-heading-line);
   font-weight: var(--text-heading-weight);
 }
 
@@ -94,7 +100,7 @@
 }
 
 .blockedText {
-  color: var(--color-text);
+  color: var(--color-text-muted);
   font-size: var(--text-caption-size);
   line-height: var(--text-caption-line);
   font-weight: var(--text-caption-weight);
@@ -106,6 +112,12 @@
 }
 
 @media (min-width: 40rem) {
+  /* Done: a calm success tint, so finished work recedes but stays readable. */
+  .root[data-status="done"] {
+    background: var(--color-success-soft);
+    box-shadow: none;
+  }
+
   .main {
     grid-template-columns: auto minmax(0, 1fr) minmax(18rem, auto);
   }

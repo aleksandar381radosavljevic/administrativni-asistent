@@ -6,8 +6,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChecklistView } from "@/components/public/ChecklistView/ChecklistView";
+import { categoryToneOf } from "@/lib/domain/categories";
 import { format } from "@/lib/i18n/format";
 import { labels } from "@/lib/i18n/labels";
+import { listCategories } from "@/lib/services/categories";
 import { getLifeEventBySlug } from "@/lib/services/life-events";
 import styles from "./page.module.css";
 
@@ -33,9 +35,18 @@ export default function ChecklistPage({ params }: Props) {
 }
 
 async function ChecklistContent({ params }: Pick<Props, "params">) {
-  const lifeEvent = await getLifeEventBySlug((await params).slug);
+  const { slug } = await params;
+  const [lifeEvent, categories] = await Promise.all([
+    getLifeEventBySlug(slug),
+    listCategories(),
+  ]);
   if (lifeEvent === null) notFound();
-  return <ChecklistView lifeEvent={lifeEvent} />;
+  return (
+    <ChecklistView
+      lifeEvent={lifeEvent}
+      tone={categoryToneOf(categories.data, lifeEvent.category.id)}
+    />
+  );
 }
 
 function ChecklistSkeleton() {

@@ -79,7 +79,12 @@ export const labels = {
   // P4 Checklist (08 P4, 06 §12.14).
   checklistPage: {
     title: "Checklist: {title}",
+    eyebrow: "Checklist",
+    next: "Sledeće",
+    allDone: "Sve je završeno. Svaka čast!",
     progress: "{done} / {total} završeno",
+    // After the large done count in the progress card: "2 / 5 završeno".
+    progressRest: " / {total} završeno",
     storageInfo:
       "Napredak se čuva lokalno u ovom pretraživaču i nije sinhronizovan između uređaja.",
     storageInfoMore:

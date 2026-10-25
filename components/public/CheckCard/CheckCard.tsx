@@ -21,6 +21,8 @@ const options = CHECKLIST_STATUSES.map((status) => ({
 }));
 
 interface CheckCardProps {
+  /** Anchor for links to this card, such as the checklist's "Sledeće". */
+  id?: string;
   procedure: Pick<ProcedureInEvent, "title" | "institutions">;
   href: string;
   status: ChecklistStatus;
@@ -36,6 +38,7 @@ interface CheckCardProps {
  * stays editable (ES-04) and warns once the user starts it anyway (UF-07).
  */
 export function CheckCard({
+  id,
   procedure,
   href,
   status,
@@ -50,7 +53,12 @@ export function CheckCard({
   return (
     // Not Osnova's Card: the blocked style replaces the card's shadow with a
     // dashed outline, and Osnova components must not be restyled.
-    <li className={styles.root} data-blocked={isBlocked || undefined}>
+    <li
+      id={id}
+      className={styles.root}
+      data-blocked={isBlocked || undefined}
+      data-status={status}
+    >
       <div className={styles.main}>
         <span className={styles.marker} aria-hidden="true">
           {isBlocked ? (

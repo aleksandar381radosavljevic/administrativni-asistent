@@ -258,12 +258,16 @@ Phase computation is a pure function in the app (unit-tested, [ADR 0009](decisio
 Lets the user track their own progress through the procedures of a life event, per procedure ([ADR 0011](decisions/0011-content-and-copy-defaults.md)), without an account.
 
 ### Layout and components
-- BackLink "{naziv događaja}" → `/dogadjaj/[slug]`.
-- `h1` "Checklist: {naziv događaja}".
-- ProgressBar "{done} / {total} završeno".
-- Banner `info` (static, not dismissible): "Napredak se čuva lokalno u ovom pretraživaču i nije sinhronizovan između uređaja." Second line: "Ako obrišeš podatke pretraživača ili koristiš privatni prozor, napredak se gubi." (PR-18, ES-11, ES-12)
-- PhaseIndicator with CheckCards ([06 §12.14](06-design-system.md)): status circle, title link to `/procedura/[slug]?dogadjaj={eventSlug}`, organization, three-option status control; blocked cards show `lock` and "Zavisi od: {naslov} (još nije završeno)".
-- Button `ghost` "Poništi napredak" at the end → confirmation dialog "Da li želiš da vratiš sve procedure ovog događaja na „Nije počelo”?" ("Poništi" / "Odustani").
+The page takes its category's tone, like P3 ([ADR 0020](decisions/0020-illustrated-visual-direction.md)).
+- Hero, a full-bleed field in the category's soft tint: BackLink "{naziv događaja}" → `/dogadjaj/[slug]`, then the `h1` "Checklist: {naziv događaja}", shown as an eyebrow "Checklist" in the tone over the event title (`--font-display`).
+- Progress card (Card-like surface, `--radius-xl`):
+  - ProgressBar "{done} / {total} završeno", the done count large in the tone.
+  - "Sledeće: {naslov}", one link to that procedure's card on this page (`#korak-{slug}`). The next step is the first procedure in phase order that is not done and has no pending dependency; one already "U toku" goes first. When everything is done: "Sve je završeno. Svaka čast!"
+  - The storage notice as a muted caption with the `info` icon (PR-18, ES-11, ES-12): "Napredak se čuva lokalno u ovom pretraživaču i nije sinhronizovan između uređaja. Ako obrišeš podatke pretraživača ili koristiš privatni prozor, napredak se gubi." It is true on every visit, so it is not a Banner.
+  - On phones it sits under the hero without its heading; from 1024 px it is the sticky right column (20 rem) with the heading "Tvoj napredak", as on P3.
+- PhaseIndicator in the category's tone with CheckCards ([06 §12.14](06-design-system.md)): status circle, title link to `/procedura/[slug]?dogadjaj={eventSlug}`, organization, three-option status control; blocked cards show `lock` and "Zavisi od: {naslov} (još nije završeno)".
+- Button `ghost` "Poništi napredak" at the end of the list → confirmation dialog "Da li želiš da vratiš sve procedure ovog događaja na „Nije počelo”?" ("Poništi" / "Odustani").
+- At the end: the assistant band from Home.
 
 ### Data
 | Source | Content |
@@ -308,7 +312,7 @@ type ChecklistState = {
 
 ### States
 - **Before hydration:** the server renders the full list with every card in `todo` and the controls disabled (`aria-busy` on the list); after hydration the stored state is applied. No skeleton flash for content that is already known.
-- **localStorage unavailable** (blocked storage, some private modes): Banner `warning` replaces the info Banner: "Pretraživač ne dozvoljava čuvanje. Napredak će se izgubiti kad zatvoriš stranicu." The checklist works in memory.
+- **localStorage unavailable** (blocked storage, some private modes): Banner `warning` replaces the storage notice in the progress card: "Pretraživač ne dozvoljava čuvanje. Napredak će se izgubiti kad zatvoriš stranicu." The checklist works in memory.
 - **Not found:** as P3.
 - **Error loading the life event:** §0.5. (There is no "show stale local data" mode: without the procedure list there is nothing to show.)
 

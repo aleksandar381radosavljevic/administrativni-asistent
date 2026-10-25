@@ -1,20 +1,179 @@
+/* The category's tone (ADR 0020), as on the life event page. */
+.category-1 {
+  --event-tone: var(--color-category-1);
+  --event-tint: var(--color-category-1-soft);
+}
+
+.category-2 {
+  --event-tone: var(--color-category-2);
+  --event-tint: var(--color-category-2-soft);
+}
+
+.category-3 {
+  --event-tone: var(--color-category-3);
+  --event-tint: var(--color-category-3-soft);
+}
+
+.category-4 {
+  --event-tone: var(--color-category-4);
+  --event-tint: var(--color-category-4-soft);
+}
+
+.category-5 {
+  --event-tone: var(--color-category-5);
+  --event-tint: var(--color-category-5-soft);
+}
+
+.category-6 {
+  --event-tone: var(--color-category-6);
+  --event-tint: var(--color-category-6-soft);
+}
+
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  max-inline-size: var(--layout-reading);
+  gap: var(--space-8);
 }
 
-.header {
+/* Full-bleed tinted header, like the life event page. */
+.hero {
+  margin-inline: calc(50% - 50vw);
+  margin-block-start: calc(var(--space-6) * -1);
+  background-color: var(--event-tint);
+}
+
+.heroInner {
+  display: grid;
+  gap: var(--space-5);
+  max-inline-size: var(--layout-container);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+}
+
+.heroText {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-4);
+  min-inline-size: 0;
 }
 
 .title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.eyebrow {
+  color: var(--event-tone);
+  font-size: var(--text-eyebrow-size);
+  line-height: var(--text-eyebrow-line);
+  font-weight: var(--text-eyebrow-weight);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.titleText {
+  max-inline-size: 16ch;
+  font-family: var(--font-display);
+  font-size: calc(var(--text-display-size) * 1.2);
+  line-height: 1.05;
+  font-weight: var(--text-hero-weight);
+  letter-spacing: -0.02em;
+}
+
+/* The progress card: the page's answer to "where am I?". */
+.progress {
+  grid-area: progress;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* On a phone the card sits right under the title: the heading would repeat it. */
+.progressTitle {
+  display: none;
+  font-family: var(--font-display);
+  font-size: var(--text-heading-size);
+  line-height: var(--text-heading-line);
+  font-weight: var(--text-heading-weight);
+}
+
+.count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15em;
+}
+
+.countDone {
+  font-family: var(--font-display);
   font-size: var(--text-display-size);
-  line-height: var(--text-display-line);
-  font-weight: var(--text-display-weight);
+  line-height: 1;
+  font-weight: var(--text-hero-weight);
+  color: var(--event-tone);
+}
+
+/* The whole "Sledeće" block is one link to the card. */
+.next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.nextLabel {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  font-weight: var(--text-caption-weight);
+}
+
+.nextTitle {
+  font-weight: var(--text-heading-weight);
+  text-decoration: underline;
+  text-decoration-color: var(--event-tone);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.next:hover .nextTitle {
+  text-decoration-color: currentColor;
+}
+
+.next:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.allDone {
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-border-subtle);
+  font-family: var(--font-display);
+  font-size: var(--text-title-size);
+  line-height: var(--text-title-line);
+  font-weight: var(--text-title-weight);
+}
+
+/* Required notice (PR-18), kept quiet: it is true on every visit. */
+.storage {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+}
+
+.storageIcon {
+  flex: none;
+  margin-block-start: 0.1em;
 }
 
 .cards {
@@ -26,8 +185,65 @@
   list-style: none;
 }
 
+/* The "Sledeće" link scrolls the card clear of the top edge. */
+.cards > li {
+  scroll-margin-block-start: var(--space-6);
+}
+
+.body {
+  display: grid;
+  grid-template-areas:
+    "progress"
+    "phases";
+  gap: var(--space-6);
+}
+
+.phases {
+  grid-area: phases;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.phases > :first-child {
+  align-self: stretch;
+}
+
 @media (min-width: 40rem) {
-  .root {
-    max-inline-size: 48rem;
+  .heroInner {
+    padding-inline: var(--space-6);
+  }
+}
+
+@media (min-width: 64rem) {
+  .heroInner {
+    padding-block: var(--space-8) var(--space-12);
+  }
+
+  .titleText {
+    font-size: max(
+      calc(var(--text-display-size) * 1.35),
+      calc(var(--text-hero-size) * 0.6)
+    );
+  }
+
+  /* Like the life event page: phases on the left, progress sticky on the right. */
+  .body {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-areas: "phases progress";
+    align-items: start;
+    gap: var(--space-12);
+  }
+
+  .progress {
+    position: sticky;
+    inset-block-start: var(--space-6);
+    padding: var(--space-5);
+  }
+
+  .progressTitle {
+    display: revert;
   }
 }
