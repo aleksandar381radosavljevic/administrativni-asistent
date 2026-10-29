@@ -678,10 +678,11 @@ Checklist progress: native `<progress max={total} value={done}>` styled with CSS
 
 A procedure in the checklist with its status. Replaces the v1.0 one-tap cycle `todo → in-progress → done → todo`, where a stray tap erased "done".
 
-- Layout: status circle (24 px, `aria-hidden`) · title as a link to the procedure page (`--text-body` weight 700) · organization (`--text-caption`, muted) · status control.
+- Layout: status circle (24 px, `aria-hidden`) · title as a link to the procedure page (`--text-heading`) · organization (`--text-caption`, muted) · status control. The card carries an `id` (`korak-{slug}`) for the checklist's "Sledeće" link.
+- Done: `--color-success-soft` background instead of the shadow, so finished work recedes (muted text on it is 5.12:1).
 - **Status control**: a `<fieldset>` with `<legend>` = procedure title (visually hidden) and three radio buttons rendered as a segmented control: "Nije počelo", "U toku", "Završeno". Each segment ≥ 44 px tall; arrow keys move between options (native radio behavior). One explicit choice per change; nothing cycles.
 - Status circle: `todo` empty with 2 px `--color-border`; `in_progress` 2 px `--color-attention` border with left half `--color-attention-fill`; `done` `--color-success` fill with white `check`.
-- **Blocked** (a dependency is not `done`): 1.5 px dashed `--color-border` instead of the shadow, `lock` icon in place of the circle, and the text "Zavisi od: {naslov} (još nije završeno)" in `--text-caption` `--color-text`. No opacity reduction. The status control stays enabled (ES-04): choosing "U toku" or "Završeno" on a blocked card shows an inline `warning` Banner under the card, "Ova procedura zavisi od {naslov}, koja još nije završena. Možeš da nastaviš, ali proveri redosled." (UF-07). The Banner disappears when the dependency is marked done.
+- **Blocked** (a dependency is not `done`): 1.5 px dashed `--color-border` instead of the shadow, `lock` icon in place of the circle, and the text "Zavisi od: {naslov} (još nije završeno)" in `--text-caption` `--color-text-muted`. No opacity reduction. The status control stays enabled (ES-04): choosing "U toku" or "Završeno" on a blocked card shows an inline `warning` Banner under the card, "Ova procedura zavisi od {naslov}, koja još nije završena. Možeš da nastaviš, ali proveri redosled." (UF-07). The Banner disappears when the dependency is marked done.
 - Status changes are announced through one polite live region for the page ("Prijava prebivališta: Završeno. 2 / 4 završeno.").
 
 ### 12.15 ChatMessage

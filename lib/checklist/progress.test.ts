@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countDone, pendingDependencies } from "./progress";
+import { countDone, nextStep, pendingDependencies } from "./progress";
 import type { ChecklistStatus } from "./storage";
 
 const procedures = [
@@ -52,5 +52,33 @@ describe("countDone", () => {
         statuses({ "id-card": "done", address: "in_progress" }),
       ),
     ).toBe(1);
+  });
+});
+
+describe("nextStep", () => {
+  it("suggests the first open procedure whose dependencies are done", () => {
+    expect(nextStep(procedures, statuses({}))?.procedure_id).toBe("id-card");
+    expect(
+      nextStep(procedures, statuses({ "id-card": "done" }))?.procedure_id,
+    ).toBe("address");
+  });
+
+  it("puts started work first", () => {
+    const independent = [
+      { procedure_id: "a", sort_order: 1, depends_on: [] },
+      { procedure_id: "b", sort_order: 2, depends_on: [] },
+    ];
+    expect(
+      nextStep(independent, statuses({ b: "in_progress" }))?.procedure_id,
+    ).toBe("b");
+  });
+
+  it("is null once everything is done", () => {
+    expect(
+      nextStep(
+        procedures,
+        statuses({ "id-card": "done", address: "done", car: "done" }),
+      ),
+    ).toBeNull();
   });
 });
